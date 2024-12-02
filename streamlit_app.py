@@ -211,24 +211,24 @@ base_chart = alt.Chart(dwarf_all).mark_point(filled=True, opacity=1).encode(
 charts_to_layer.append(base_chart)
 
 if show_xerr:
-    xerrorbars = base_chart.mark_errorbar(ticks=True).encode(
+    xerrorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
         x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         x2=alt.X2(plot_xaxis+"_high", title=""),
-        #color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host'))
+        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None)
     ).transform_filter(
         (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
     )
     charts_to_layer.append(xerrorbars)
 
 if show_yerr:
-    yerrorbars = base_chart.mark_errorbar(ticks=True).encode(
+    yerrorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
         y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         y2=alt.Y2(plot_yaxis+"_high", title=""),
         # yError=alt.YError(plot_yaxis + '_low'),
         # yError2=alt.YError(plot_yaxis + '_high')
-        #color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host'))
+        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None)
         ).transform_filter(
         (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0)
         )
@@ -245,7 +245,7 @@ def plot_dwarf_all():
     st.altair_chart(alt.layer(*charts_to_layer).configure_legend(
 titleFontSize=18,
 labelFontSize=15
-).resolve_scale(color='independent').interactive(), use_container_width=True)
+).resolve_legend(color='independent').interactive(), use_container_width=True)
 
 plot_dwarf_all()
 
