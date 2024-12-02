@@ -17,7 +17,7 @@ ellipticity_em,float64,,,,N/A
 ellipticity_ep,float64,,,,N/A
 ellipticity_ul,float64,Ellipticity Upper Limit,Ellipticity Upper Limit,,N/A
 ref_structure,str,,,reference for structural parameters,N/A
-distance_modulus,float64,$\mu$,μ,distance modulus,mag
+distance_modulus,float64,$\mu$,Distance Modulus,distance modulus,mag
 distance_modulus_em,float64,,,,N/A
 distance_modulus_ep,float64,,,,N/A
 ref_distance,str,,,reference for distance,N/A
@@ -31,7 +31,7 @@ vlos_systemic_ep,float64,,,,N/A
 vlos_sigma,float64,$\sigma_{vlos}$,σᵥₗₒₛ,velocity dispersion in line-of-sight,km/s
 vlos_sigma_em,float64,,,,N/A
 vlos_sigma_ep,float64,,,,N/A
-vlos_sigma_ul,float64,,,,N/A
+vlos_sigma_ul,float64,,LOS Velocity Dispersion upper limit,,N/A
 ref_vlos,str,,,,N/A
 pmra,float64,$\mu_{\alpha *}$,μ_α,"systemic proper motion in right ascension, includes cos(dec) term following Gaia",mas/yr
 pmra_em,float64,,,,N/A
@@ -75,10 +75,10 @@ flux_HI_em,float64,,,,N/A
 flux_HI_ep,float64,,,,N/A
 flux_HI_ul,float64,,,,N/A
 ref_flux_HI,str,,,,N/A
-metallicity_photometric,float64,,,photometric metallicity,N/A
+metallicity_photometric,float64,,Photometric Metallicity,photometric metallicity,N/A
 metallicity_photometric_em,float64,,,,N/A
 metallicity_photometric_ep,float64,,,,N/A
-metallicity_photometric_sigma,float64,,,photometric metallicity dispersion,N/A
+metallicity_photometric_sigma,float64,,Photometric Metallicity Dispersion,photometric metallicity dispersion,N/A
 metallicity_photometric_sigma_em,float64,,,,N/A
 metallicity_photometric_sigma_ep,float64,,,,N/A
 metallicity_photometric_sigma_ul,float64,,,,N/A
@@ -86,7 +86,7 @@ ref_metallicity_photometric,str,,,,N/A
 M_V,float64,Mv,Mv,"absolute V-band magnitude, computed from distance modulus and V-band apparent magnitude",N/A
 M_V_em,float64,,,,N/A
 M_V_ep,float64,,,,N/A
-mass_stellar,float64,,,log10 stellar mass assuming M/L=2 and computed from M_V,log10 Msun
+mass_stellar,float64,M_\odot,Stellar Mass,log10 stellar mass assuming M/L=2 and computed from M_V,log10 Msun
 distance,float64,D_{\odot},D_⊙,"heliocentric distance, computed from distance modulus",kpc
 distance_em,float64,,,,N/A
 distance_ep,float64,,,,N/A
@@ -104,17 +104,17 @@ mass_HI_ul,float64,,,,N/A
 metallicity,float64,[Fe/H],[Fe/H],"union of spectroscopic, photometric, and isochrone, spectroscopic preferred over photometric metallicity, and photometric over isochrone",N/A
 metallicity_em,float64,,,,N/A
 metallicity_ep,float64,,,,N/A
-metallicity_type,str,,,"lists whether metallicity column is photometric, isochrone or spectroscopic.",N/A
-velocity_gsr,float64,,,Velocity in Galactic standard of rest frame,km/s
-velocity_lg,float64,,,Velocity of system relative to the Local Group centroid,N/A
-mass_dynamical_wolf,float64,M_{dyn},M_{dyn},Dynamical mass within 3D half-light radius using the dynamical mass estimator in Wolf et al. 2010,log10 Msun
+metallicity_type,str,,Metallicity Type,"lists whether metallicity column is photometric, isochrone or spectroscopic.",N/A
+velocity_gsr,float64,,Velocity rel. to Galactic standard,Velocity in Galactic standard of rest frame,km/s
+velocity_lg,float64,,Velocity rel. to LG,Velocity of system relative to the Local Group centroid,km/s
+mass_dynamical_wolf,float64,M_{dyn},Dynamical Mass (Wolf),Dynamical mass within 3D half-light radius using the dynamical mass estimator in Wolf et al. 2010,log10 Msun
 mass_dynamical_wolf_em,float64,,,,N/A
 mass_dynamical_wolf_ep,float64,,,,N/A
 mass_dynamical_wolf_ul,float64,,,,N/A
 rhalf_physical,float64,r_h,rₕ,half-light radius in physical units – rhalf * distance,pc
 rhalf_physical_em,float64,,,,N/A
 rhalf_physical_ep,float64,,,,N/A
-rhalf_sph_physical,float64,r_{1/2},r½,azimuthally-averaged half-light radius (geometric mean); rhalf * distance * sqrt(1-ellipticity),N/A
+rhalf_sph_physical,float64,r_{1/2},r½,azimuthally-averaged half-light radius (geometric mean); rhalf * distance * sqrt(1-ellipticity),pc
 rhalf_sph_physical_em,float64,,,,N/A
 rhalf_sph_physical_ep,float64,,,,N/A
 surface_brightness_rhalf,float64,<\mu>,μ_r½,average surface brightness within azimuthally-averaged half-light radius,mag/arcsec^2
