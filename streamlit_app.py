@@ -16,6 +16,8 @@ import astropy.coordinates as coord
 import local_volume_database # idk what this does yet
 
 #st.set_page_config(layout="centered")
+
+
 # ---------------------load data---------------------- #
 @st.cache_data
 def load_data():
@@ -40,37 +42,33 @@ def load_data():
 
     #dsph_mw['mass_HI_ul'] = (235600*dsph_mw['flux_HI_ul']*(dsph_mw['distance']/1000.)**2) # this is just the 10**x version of the mass_HI_ul column in dwarf_all
     #comb['mass_HI_ul'] = np.log10(235600*comb['flux_HI_ul']*(comb['distance']/1000.)**2)
-    for key in dwarf_all.keys():
-        if (key+'_em' in dwarf_all.keys()):
-            # dwarf_all[key] = -1*dwarf_all[key]
-            # dsph_mw[key] = -1*dsph_mw[key]
-            # dsph_m31[key] = -1*dsph_m31[key]
-            # dsph_lf[key] = -1*dsph_lf[key]
-            # dsph_lf_distant[key] = -1*dsph_lf_distant[key]
-            # gc_ambiguous[key] = -1*gc_ambiguous[key]
-            # gc_mw_new[key] = -1*gc_mw_new[key]  
-            # gc_harris[key] = -1*gc_harris[key]
-            # gc_dwarf_hosted[key] = -1*gc_dwarf_hosted[key]
-            # gc_other[key] = -1*gc_other[key]
-            # candidate[key] = -1*candidate[key]
-            # misc_host[key] = -1*misc_host[key]
-            dwarf_all[key+"_low"] = dwarf_all[key]-dwarf_all[key+'_em']
-            dwarf_all[key+"_low"] = dwarf_all[key+"_low"].fillna(0)
-        if (key+'_ep' in dwarf_all.keys()):
-            dwarf_all[key+"_high"] = dwarf_all[key]+dwarf_all[key+'_ep']
-            dwarf_all[key+"_high"] = dwarf_all[key+"_high"].fillna(0)
-        if (key+'_ul' in dwarf_all.keys()):
+    # Combine all tables except dwarf_all into one big dataframe
+    tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
+    table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
+    
+    combined_df = pd.concat([table.assign(source=name) for table, name in zip(tables, table_names)], ignore_index=True)
+
+    for key in combined_df.keys():
+        if (key+'_em' in combined_df.keys()):
+            combined_df[key+"_low"] = combined_df[key]-combined_df[key+'_em']
+            combined_df[key+"_low"] = combined_df[key+"_low"].fillna(0)
+        if (key+'_ep' in combined_df.keys()):
+            combined_df[key+"_high"] = combined_df[key]+combined_df[key+'_ep']
+            combined_df[key+"_high"] = combined_df[key+"_high"].fillna(0)
+        if (key+'_ul' in combined_df.keys()):
             # print(32*np.nanstd(dwarf_all[key]))
-            dwarf_all[key+"_upper"] = np.ones(len(dwarf_all[key+'_ul']))*1000*np.nanstd(dwarf_all[key])
-            dwarf_all[key+"_upper"] = dwarf_all[key+"_upper"].fillna(0)
+            combined_df[key+"_upper"] = np.ones(len(combined_df[key+'_ul']))*1000*np.nanstd(combined_df[key])
+            combined_df[key+"_upper"] = combined_df[key+"_upper"].fillna(0)
         # for key in dwarf_all.keys():
         #     if key.endswith('_em') or key.endswith('_ep'):
         #         dwarf_all[key].fillna(0, inplace=True)
-    return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host
 
-dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host = load_data()
+    return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
 
-
+dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, master_df = load_data()
+print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len(dsph_lf_distant)+len(gc_ambiguous)+len(gc_mw_new)+len(gc_harris)+len(gc_dwarf_hosted)+len(gc_other)+len(candidate),len(misc_host))
+#st.dataframe(dwarf_all, use_container_width=True) # use_container_width doesn't work??
+#st.dataframe(master_df, use_container_width=True)
 # ---------------------dictionary of column labels and descriptions---------------------- #
 #print(dwarf_all['M_V_high'])
 tab_desc = pd.read_csv('table_descriptions.csv', index_col='property', keep_default_na=False)
@@ -110,7 +108,7 @@ def get_axis_specs(axis, key):
     reverse_axis = False
     label = tab_desc[axis]['label']
     if tab_desc[axis]['dtype'] in ['float64'] and axis not in ['ra', 'dec']:
-        if not (dwarf_all[axis] <= 0).any():
+        if not (master_df[axis] <= 0).any():
             type_axis = st.segmented_control(label + ' scale', ['linear', 'log'], default='linear', key=key)
     if tab_desc[axis]['dtype'] in ['float64']:
         channel = 'quantitative'
@@ -127,7 +125,7 @@ def get_axis_specs(axis, key):
     if type_axis is None:
         type_axis = 'linear'
 
-    if axis+"_high" in dwarf_all.keys():
+    if axis+"_high" in master_df.keys():
         show_error = st.checkbox(label + ' error bars?', key=key+"err")
     else:
         show_error = False
@@ -157,11 +155,11 @@ st.session_state.my_key1=st.session_state.my_key1
 st.session_state.my_key2=st.session_state.my_key2
 with st.sidebar:
     with st.container(border=True, key='xcont') as xcont:
-        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, index=1, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
+        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, index=None, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
         #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
         type_x, reverse_x, xlabel, channel_x, show_xerr = get_axis_specs(plot_xaxis, 'xaxis')
     with st.container(border=True, key='ycont') as ycont:
-        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, index=2, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
+        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, index=None, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr = get_axis_specs(plot_yaxis, 'yaxis')
 # st.selectbox(
@@ -197,21 +195,29 @@ with st.sidebar:
 
 
 #-----create selections and conditions for interactivity-----#
+
 selection = alt.selection_point(fields=['host'], bind='legend',nearest=False,)
 
 
 #---------------------user select what values to show in tooltip----------------------#
+
 with st.sidebar:
-    tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'])
+    def tooltip_items():
+        tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'])
+        #tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
+        return tooltip_select
 # print([tab_desc[x]['desc'] for x in tooltip_select])
-tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
+#tooltip = tooltip_items()
+    tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_items()]
+
+    #st.write(tooltip)
 # ---------------------plot---------------------- #
 #print(tab_desc['ra'])
 charts_to_layer = []
-base_chart = alt.Chart(dwarf_all).mark_point(filled=True, opacity=1).encode(
+base_chart = alt.Chart(master_df).mark_point(filled=True, opacity=1).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
-     color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host')),
+     color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Source')),
      tooltip = tooltip
      )#.add_params(selection).transform_filter(selection)
 
@@ -220,14 +226,14 @@ charts_to_layer.append(base_chart)
 #help(alt.Chart.configure_point)
 
 #print(plot_yaxis+"_ul")
-if plot_yaxis+"_ul" in dwarf_all.keys():
+if plot_yaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
 
-    yul = alt.Chart(dwarf_all).mark_point(shape="arrow", filled=True, size=500, angle=180, strokeWidth=0).encode(
+    yul = alt.Chart(master_df).mark_point(shape="arrow", filled=True, size=500, angle=180, strokeWidth=0).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         #y2=alt.Y2(plot_yaxis+"_upper"),
-        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
         tooltip=tooltip,
         
         yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
@@ -237,14 +243,14 @@ if plot_yaxis+"_ul" in dwarf_all.keys():
     )
     charts_to_layer.append(yul)
 
-if plot_xaxis+"_ul" in dwarf_all.keys():
+if plot_xaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_xaxis+"_ul", title=tab_desc[plot_xaxis+"_ul"]['label']))
 
-    xul = alt.Chart(dwarf_all).mark_point(shape="arrow", filled=True).encode(
+    xul = alt.Chart(master_df).mark_point(shape="arrow", filled=True).encode(
         x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         size=alt.value(10),
-        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
         tooltip=tooltip,
         angle=alt.value(-90),
         xOffset=alt.value(-10),
@@ -255,23 +261,23 @@ if plot_xaxis+"_ul" in dwarf_all.keys():
     charts_to_layer.append(xul)
 
 if show_xerr:
-    xerrorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
+    xerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
         x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         x2=alt.X2(plot_xaxis+"_high", title=""),
-        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
         tooltip=alt.value(None)
     ).transform_filter(
         (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
     )
     charts_to_layer.append(xerrorbars)
 
-    if plot_yaxis+"_ul" in dwarf_all.keys():
-        xup_errorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
+    if plot_yaxis+"_ul" in master_df.keys():
+        xup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
             x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
             y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             x2=alt.X2(plot_xaxis+"_high", title=""),
-            color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+            color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
             tooltip=alt.value(None)
         ).transform_filter(
             (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
@@ -279,25 +285,25 @@ if show_xerr:
         charts_to_layer.append(xup_errorbars)
 
 if show_yerr:
-    yerrorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
+    yerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
         y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         y2=alt.Y2(plot_yaxis+"_high", title=""),
         # yError=alt.YError(plot_yaxis + '_low'),
         # yError2=alt.YError(plot_yaxis + '_high')
-        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
         tooltip=alt.value(None)
         ).transform_filter(
         (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0)
         )
     charts_to_layer.append(yerrorbars)
 
-    if plot_xaxis+"_ul" in dwarf_all.keys():
-        yup_errorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
+    if plot_xaxis+"_ul" in master_df.keys():
+        yup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
             x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
             y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             y2=alt.Y2(plot_yaxis+"_high", title=""),
-            color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+            color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
             tooltip=alt.value(None)
             ).transform_filter(
             (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0)
