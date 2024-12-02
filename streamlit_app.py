@@ -15,7 +15,6 @@ import astropy.coordinates as coord
 
 import local_volume_database # idk what this does yet
 
-
 #st.set_page_config(layout="centered")
 # ---------------------load data---------------------- #
 @st.cache_data
@@ -61,7 +60,7 @@ def load_data():
             dwarf_all[key+"_high"] = dwarf_all[key]+dwarf_all[key+'_ep']
             dwarf_all[key+"_high"] = dwarf_all[key+"_high"].fillna(0)
         if (key+'_ul' in dwarf_all.keys()):
-            print(32*np.nanstd(dwarf_all[key]))
+            # print(32*np.nanstd(dwarf_all[key]))
             dwarf_all[key+"_upper"] = np.ones(len(dwarf_all[key+'_ul']))*1000*np.nanstd(dwarf_all[key])
             dwarf_all[key+"_upper"] = dwarf_all[key+"_upper"].fillna(0)
         # for key in dwarf_all.keys():
@@ -204,10 +203,10 @@ selection = alt.selection_point(fields=['host'], bind='legend',nearest=False,)
 #---------------------user select what values to show in tooltip----------------------#
 with st.sidebar:
     tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'])
-print([tab_desc[x]['desc'] for x in tooltip_select])
+# print([tab_desc[x]['desc'] for x in tooltip_select])
 tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
 # ---------------------plot---------------------- #
-print(tab_desc['ra'])
+#print(tab_desc['ra'])
 charts_to_layer = []
 base_chart = alt.Chart(dwarf_all).mark_point(filled=True, opacity=1).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
@@ -219,41 +218,41 @@ base_chart = alt.Chart(dwarf_all).mark_point(filled=True, opacity=1).encode(
 charts_to_layer.append(base_chart)
 
 #help(alt.Chart.configure_point)
-# NEED TO PLOT UPPER LIMIT VALUES AS WELL!
+
 #print(plot_yaxis+"_ul")
 if plot_yaxis+"_ul" in dwarf_all.keys():
     tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
-    st.write("YES")
-    #st.write(dwarf_all[plot_yaxis+"_upper"])
-    yul = alt.Chart(dwarf_all).mark_point(shape="arrow", filled=True, height=500, baseline='bottom').encode(
+
+    yul = alt.Chart(dwarf_all).mark_point(shape="arrow", filled=True, size=500, angle=180, strokeWidth=0).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-        size=alt.value(500),
+        #y2=alt.Y2(plot_yaxis+"_upper"),
         color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
         tooltip=tooltip,
-        angle=alt.value(180),
+        
         yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
+        
     ).transform_filter(
-        (alt.datum[plot_yaxis] != 0) & (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0)
+        (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0)
     )
     charts_to_layer.append(yul)
 
 if plot_xaxis+"_ul" in dwarf_all.keys():
     tooltip.append(alt.Tooltip(plot_xaxis+"_ul", title=tab_desc[plot_xaxis+"_ul"]['label']))
-    xul = alt.Chart(dwarf_all).mark_point(shape="arrow", height=500, filled=True, baseline='bottom').encode(
+
+    xul = alt.Chart(dwarf_all).mark_point(shape="arrow", filled=True).encode(
         x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-        size=alt.value(500),
+        size=alt.value(10),
         color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
         tooltip=tooltip,
         angle=alt.value(-90),
         xOffset=alt.value(-10),
+        strokeWidth=alt.value(10)
     ).transform_filter(
-        (alt.datum[plot_xaxis] != 0) & (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0)
+        (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0)
     )
     charts_to_layer.append(xul)
-
-
 
 if show_xerr:
     xerrorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
@@ -266,6 +265,18 @@ if show_xerr:
         (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
     )
     charts_to_layer.append(xerrorbars)
+
+    if plot_yaxis+"_ul" in dwarf_all.keys():
+        xup_errorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
+            x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
+            y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+            x2=alt.X2(plot_xaxis+"_high", title=""),
+            color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+            tooltip=alt.value(None)
+        ).transform_filter(
+            (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
+        )
+        charts_to_layer.append(xup_errorbars)
 
 if show_yerr:
     yerrorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
@@ -281,6 +292,18 @@ if show_yerr:
         )
     charts_to_layer.append(yerrorbars)
 
+    if plot_xaxis+"_ul" in dwarf_all.keys():
+        yup_errorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
+            x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
+            y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+            y2=alt.Y2(plot_yaxis+"_high", title=""),
+            color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+            tooltip=alt.value(None)
+            ).transform_filter(
+            (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0)
+            )
+        charts_to_layer.append(yup_errorbars)
+
 # chart2 = alt.Chart(dsph_m31).mark_circle().encode(
 #      x=alt.X(plot_xaxis, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
 #      y=alt.Y(plot_yaxis, scale=alt.Scale(type=type_y, reverse=reverse_y), title=tab_desc[plot_yaxis]['label']),
@@ -291,10 +314,11 @@ if show_yerr:
 def plot_dwarf_all():
     st.altair_chart(alt.layer(*charts_to_layer).configure_legend(
 titleFontSize=18,
-labelFontSize=15
+labelFontSize=10
 ).resolve_legend(color='independent', size='independent').interactive(), use_container_width=True)
 
-plot_dwarf_all()
+with st.container():
+    plot_dwarf_all()
 
 
 #st.toast('Welcome to the Local Volume Database!')
