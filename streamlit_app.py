@@ -60,7 +60,10 @@ def load_data():
         if (key+'_ep' in dwarf_all.keys()):
             dwarf_all[key+"_high"] = dwarf_all[key]+dwarf_all[key+'_ep']
             dwarf_all[key+"_high"] = dwarf_all[key+"_high"].fillna(0)
-
+        if (key+'_ul' in dwarf_all.keys()):
+            print(32*np.nanstd(dwarf_all[key]))
+            dwarf_all[key+"_upper"] = np.ones(len(dwarf_all[key+'_ul']))*1000*np.nanstd(dwarf_all[key])
+            dwarf_all[key+"_upper"] = dwarf_all[key+"_upper"].fillna(0)
         # for key in dwarf_all.keys():
         #     if key.endswith('_em') or key.endswith('_ep'):
         #         dwarf_all[key].fillna(0, inplace=True)
@@ -71,12 +74,12 @@ dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new,
 
 # ---------------------dictionary of column labels and descriptions---------------------- #
 #print(dwarf_all['M_V_high'])
-table_descriptions = pd.read_csv('table_descriptions.csv', index_col='property', keep_default_na=False)
-#print(table_descriptions.iloc[0].unit)
-table_descriptions = table_descriptions.T.to_dict(index='property')
-# print(table_descriptions.keys())
-#st.write(table_descriptions)
-# st.write(table_descriptions['rhalf_physical']['desc'])
+tab_desc = pd.read_csv('table_descriptions.csv', index_col='property', keep_default_na=False)
+#print(tab_desc.iloc[0].unit)
+tab_desc = tab_desc.T.to_dict(index='property')
+# print(tab_desc.keys())
+#st.write(tab_desc)
+# st.write(tab_desc['rhalf_physical']['desc'])
 valid_plot_cols = ['key', 'ra', 'dec', 'name', 'host', 'confirmed_real', 
                    'confirmed_dwarf', 'rhalf',  'position_angle', 'ellipticity', 
                    'distance_modulus', 'apparent_magnitude_v', 
@@ -106,27 +109,27 @@ def lum_inverse(x):
 def get_axis_specs(axis, key):
     type_axis = 'linear'
     reverse_axis = False
-    label = table_descriptions[axis]['label']
-    if table_descriptions[axis]['dtype'] in ['float64'] and axis not in ['ra', 'dec']:
+    label = tab_desc[axis]['label']
+    if tab_desc[axis]['dtype'] in ['float64'] and axis not in ['ra', 'dec']:
         if not (dwarf_all[axis] <= 0).any():
             type_axis = st.segmented_control(label + ' scale', ['linear', 'log'], default='linear', key=key)
-    if table_descriptions[axis]['dtype'] in ['float64']:
+    if tab_desc[axis]['dtype'] in ['float64']:
         channel = 'quantitative'
-    elif table_descriptions[axis]['dtype'] in ['int64']:
+    elif tab_desc[axis]['dtype'] in ['int64']:
         channel = 'ordinal'
     else:
         channel = 'nominal'
     if axis in ['apparent_magnitude_v', "M_V"]:
         reverse_axis = True
-    if table_descriptions[axis]['unit'] != "N/A":
-        axis_label = label + ' (' + table_descriptions[axis]['unit'] + ')'
+    if tab_desc[axis]['unit'] != "N/A":
+        axis_label = label + ' (' + tab_desc[axis]['unit'] + ')'
     else:
         axis_label = label
     if type_axis is None:
         type_axis = 'linear'
 
     if axis+"_high" in dwarf_all.keys():
-        show_error = st.checkbox(label + ' error bars?')
+        show_error = st.checkbox(label + ' error bars?', key=key+"err")
     else:
         show_error = False
 
@@ -137,13 +140,13 @@ def get_axis_specs(axis, key):
 # with st.sidebar:
 #     with st.container(border=True, key='xcont') as xcont:
 #         left, right = st.columns([7,1], vertical_alignment="top")
-#         plot_xaxis = left.selectbox('x-axis', valid_plot_cols, index=1, format_func=lambda x: table_descriptions[x]['label'], label_visibility='visible')
-#         right.caption("---", help=table_descriptions[plot_xaxis]['desc'])
+#         plot_xaxis = left.selectbox('x-axis', valid_plot_cols, index=1, format_func=lambda x: tab_desc[x]['label'], label_visibility='visible')
+#         right.caption("---", help=tab_desc[plot_xaxis]['desc'])
 #         type_x, reverse_x, xlabel, channel_x, show_xerr = get_axis_specs(plot_xaxis, 'xaxis')
 #     with st.container(border=True, key='ycont') as ycont:
 #         left, right = st.columns([7,1], vertical_alignment="top")
-#         plot_yaxis = left.selectbox('y-axis', valid_plot_cols, index=2, format_func=lambda x: table_descriptions[x]['label'])
-#         right.caption("---", help=table_descriptions[plot_yaxis]['desc'])
+#         plot_yaxis = left.selectbox('y-axis', valid_plot_cols, index=2, format_func=lambda x: tab_desc[x]['label'])
+#         right.caption("---", help=tab_desc[plot_yaxis]['desc'])
 #         type_y, reverse_y, ylabel, channel_y, show_yerr = get_axis_specs(plot_yaxis, 'yaxis')
 
 if "my_key1" not in st.session_state:
@@ -155,12 +158,12 @@ st.session_state.my_key1=st.session_state.my_key1
 st.session_state.my_key2=st.session_state.my_key2
 with st.sidebar:
     with st.container(border=True, key='xcont') as xcont:
-        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, index=1, key="my_key1", format_func=lambda x: table_descriptions[x]['label'], label_visibility='visible', help=f"{table_descriptions[st.session_state.my_key1]['desc']}")
-        #right.caption("---", help=table_descriptions[plot_xaxis]['desc'])
+        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, index=1, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
+        #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
         type_x, reverse_x, xlabel, channel_x, show_xerr = get_axis_specs(plot_xaxis, 'xaxis')
     with st.container(border=True, key='ycont') as ycont:
-        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, index=2, key="my_key2", format_func=lambda x: table_descriptions[x]['label'], help=f"{table_descriptions[st.session_state.my_key2]['desc']}")
-        #right.caption("---", help=table_descriptions[plot_yaxis]['desc'])
+        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, index=2, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
+        #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr = get_axis_specs(plot_yaxis, 'yaxis')
 # st.selectbox(
 #     "Make a selection",
@@ -198,24 +201,67 @@ with st.sidebar:
 selection = alt.selection_point(fields=['host'], bind='legend',nearest=False,)
 
 
+#---------------------user select what values to show in tooltip----------------------#
+with st.sidebar:
+    tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'])
+print([tab_desc[x]['desc'] for x in tooltip_select])
+tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
 # ---------------------plot---------------------- #
-
+print(tab_desc['ra'])
 charts_to_layer = []
 base_chart = alt.Chart(dwarf_all).mark_point(filled=True, opacity=1).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
      color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host')),
-     tooltip = ['name', 'host', plot_xaxis, plot_yaxis],
+     tooltip = tooltip
      )#.add_params(selection).transform_filter(selection)
 
 charts_to_layer.append(base_chart)
+
+#help(alt.Chart.configure_point)
+# NEED TO PLOT UPPER LIMIT VALUES AS WELL!
+#print(plot_yaxis+"_ul")
+if plot_yaxis+"_ul" in dwarf_all.keys():
+    tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
+    st.write("YES")
+    #st.write(dwarf_all[plot_yaxis+"_upper"])
+    yul = alt.Chart(dwarf_all).mark_point(shape="arrow", filled=True, height=500, baseline='bottom').encode(
+        x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
+        y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        size=alt.value(500),
+        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        tooltip=tooltip,
+        angle=alt.value(180),
+        yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
+    ).transform_filter(
+        (alt.datum[plot_yaxis] != 0) & (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0)
+    )
+    charts_to_layer.append(yul)
+
+if plot_xaxis+"_ul" in dwarf_all.keys():
+    tooltip.append(alt.Tooltip(plot_xaxis+"_ul", title=tab_desc[plot_xaxis+"_ul"]['label']))
+    xul = alt.Chart(dwarf_all).mark_point(shape="arrow", height=500, filled=True, baseline='bottom').encode(
+        x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
+        y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        size=alt.value(500),
+        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        tooltip=tooltip,
+        angle=alt.value(-90),
+        xOffset=alt.value(-10),
+    ).transform_filter(
+        (alt.datum[plot_xaxis] != 0) & (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0)
+    )
+    charts_to_layer.append(xul)
+
+
 
 if show_xerr:
     xerrorbars = alt.Chart(dwarf_all).mark_errorbar(ticks=True).encode(
         x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         x2=alt.X2(plot_xaxis+"_high", title=""),
-        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None)
+        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        tooltip=alt.value(None)
     ).transform_filter(
         (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
     )
@@ -228,7 +274,8 @@ if show_yerr:
         y2=alt.Y2(plot_yaxis+"_high", title=""),
         # yError=alt.YError(plot_yaxis + '_low'),
         # yError2=alt.YError(plot_yaxis + '_high')
-        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None)
+        color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=None),
+        tooltip=alt.value(None)
         ).transform_filter(
         (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0)
         )
@@ -236,7 +283,7 @@ if show_yerr:
 
 # chart2 = alt.Chart(dsph_m31).mark_circle().encode(
 #      x=alt.X(plot_xaxis, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
-#      y=alt.Y(plot_yaxis, scale=alt.Scale(type=type_y, reverse=reverse_y), title=table_descriptions[plot_yaxis]['label']),
+#      y=alt.Y(plot_yaxis, scale=alt.Scale(type=type_y, reverse=reverse_y), title=tab_desc[plot_yaxis]['label']),
 #      color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host'))
 #      ).interactive()
 
@@ -245,7 +292,7 @@ def plot_dwarf_all():
     st.altair_chart(alt.layer(*charts_to_layer).configure_legend(
 titleFontSize=18,
 labelFontSize=15
-).resolve_legend(color='independent').interactive(), use_container_width=True)
+).resolve_legend(color='independent', size='independent').interactive(), use_container_width=True)
 
 plot_dwarf_all()
 
@@ -258,18 +305,7 @@ plot_dwarf_all()
 
 st.text('all dwarfs')
 st.dataframe(dwarf_all, use_container_width=True) # use_container_width doesn't work??
-st.text('dSphs in MW')
-st.dataframe(dsph_mw, use_container_width=False)
+#st.text('dSphs in MW')
+#st.dataframe(dsph_mw, use_container_width=False)
 #st.dataframe(misc_host)
 
-
-
-
-
-
-df2 = pd.DataFrame(
-     np.random.randn(200, 3),
-     columns=['a', 'b', 'c'])
-c = alt.Chart(df2).mark_circle().encode(
-     x='a', y='b', size='c', color='c', tooltip=['a', 'b', 'c']).interactive()
-#st.write(c)
