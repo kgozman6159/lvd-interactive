@@ -14,8 +14,35 @@ from astropy import units as u
 import astropy.coordinates as coord
 
 import local_volume_database # idk what this does yet
+from collections import OrderedDict
+st.set_page_config(layout="wide")
 
-#st.set_page_config(layout="centered")
+source = pd.DataFrame({
+    "yield_error": [7.5522, 6.9775, 3.9167, 11.9732],
+    "yield_center": [32.4, 30.96667, 33.966665, 30.45],
+    "variety": ["Glabron", "Manchuria", "No. 457", "No. 462"],
+})
+
+bar = alt.Chart(source).mark_errorbar().encode(
+    x=alt.X("yield_center:Q").scale(zero=False).title("yield"),
+    xError=("yield_error:Q"),
+    y=alt.Y("variety:N"),
+).transform_filter(
+        (alt.datum["yield_error"] != 0))
+
+point = alt.Chart(source).mark_point(
+    filled=True,
+    color="green",
+    opacity=1
+).encode(
+    alt.X("yield_center:Q"),
+    alt.Y("variety:N"),
+)
+
+st.altair_chart(alt.layer(bar, point))
+
+
+
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
 
@@ -179,7 +206,7 @@ with st.sidebar:
 
 # ---------------------filtering---------------------- #
 #filter by source
-source = st.sidebar.multiselect('Source', table_names_pretty)
+source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty)
 if source:
     master_df = master_df[master_df['source_pretty'].isin(source)]
 # # filter by confirmed dwarf
@@ -212,17 +239,25 @@ color = alt.condition(
     alt.value('black'),
     alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source', symbolFillColor='black'), sort=table_names_pretty)
 )
-sizeCondition=alt.condition(
-    hover_selection,
-    alt.SizeValue(100),
-    alt.SizeValue(10)
-)
+# sizeCondition=alt.condition(
+#     hover_selection,
+#     alt.SizeValue(100),
+#     alt.SizeValue(0)
+# )
 
 strokeWidthCondition=alt.condition(
     hover_selection,
-    alt.StrokeWidthValue(100),
+    alt.StrokeWidthValue(1),
     alt.StrokeWidthValue(0)
 )
+
+strokeErrorCondition=alt.condition(
+    hover_selection,
+    alt.value('black'),
+    alt.Color('source_pretty', scale=alt.Scale(
+            domain=table_names_pretty, scheme=color_scale), title='Source', legend=None)
+)
+
 
 
 #---------------------user select what values to show in tooltip----------------------#
@@ -278,19 +313,28 @@ selection_y = alt.selection_interval(
 #     zoom="wheel!",
 # )
 
+unique_sources = master_df['source_pretty'].unique()
+unique_sources = sorted(unique_sources, key=lambda x: table_names_pretty.index(x))
+print(unique_sources)
+
 charts_to_layer = []
-base_chart = alt.Chart(master_df).mark_point(filled=True, opacity=1).encode(
+errors_to_layer = []
+
+base_chart = alt.Chart(master_df).mark_point(filled=True, opacity=1, size=50).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
-     color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source', symbolFillColor='black'), sort=table_names_pretty),
+     color=alt.Color('source_pretty',scale=alt.Scale(scheme=color_scale, domain=table_names_pretty)),
+                     
      tooltip = tooltip,
      #size=sizeCondition,
      strokeWidth=strokeWidthCondition,
-     size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0)),
+     stroke=alt.value('black'),
+     #size=alt.when(selection).then(alt.value(100)).otherwise(alt.value(0)),
+     shape=alt.Shape('source_pretty', scale=alt.Scale(scheme=color_scale, domain=table_names_pretty)),
+     #order=alt.Order('source_pretty'),
+     ).add_params(hover_selection, selection_x, selection_y)#.transform_filter(selection)
 
-     ).add_params(hover_selection, selection, selection_x, selection_y)#.transform_filter(selection)
-
-charts_to_layer.append(base_chart)
+#charts_to_layer.append(base_chart)
 
 #help(alt.Chart.configure_point)
 
@@ -298,18 +342,21 @@ charts_to_layer.append(base_chart)
 if plot_yaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
 
-    yul = alt.Chart(master_df).mark_point(shape="arrow", filled=True, size=500, angle=180, strokeWidth=10).encode(
+    yul = alt.Chart(master_df).mark_point(shape="arrow", filled=True, strokeWidth=10).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         #y2=alt.Y2(plot_yaxis+"_upper"),
-        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
         tooltip=tooltip,
-        
+        angle=alt.value(180),
+        stroke=alt.value('black'),
+        strokeWidth=strokeWidthCondition,
+        #size=alt.value(50),
         yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
-        size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
+        #size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
-        (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan')
-    ).add_params(hover_selection, selection)
+        (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0) 
+    )#.add_params(hover_selection)
     charts_to_layer.append(yul)
 
 if plot_xaxis+"_ul" in master_df.keys():
@@ -318,16 +365,17 @@ if plot_xaxis+"_ul" in master_df.keys():
     xul = alt.Chart(master_df).mark_point(shape="arrow", filled=True).encode(
         x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-        #size=alt.value(500),
-        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+        size=alt.value(500),
+        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
         tooltip=tooltip,
         angle=alt.value(-90),
         xOffset=alt.value(-10),
-        strokeWidth=alt.value(10),
-        size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
+        stroke=alt.value('black'),
+        strokeWidth=strokeWidthCondition,
+        #size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
-        (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan')
-    ).add_params(hover_selection, selection)
+        (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0) 
+    )#.add_params(hover_selection)
     charts_to_layer.append(xul)
 
 if show_xerr:
@@ -335,12 +383,17 @@ if show_xerr:
         x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         x2=alt.X2(plot_xaxis+"_high", title=""),
-        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+        size=alt.value(500),
+        #stroke=alt.value('black'),
+        #strokeWidth=strokeErrorCondition,
+        color=strokeErrorCondition,
+        # color=alt.Color('source_pretty', scale=alt.Scale(
+        #     domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
         tooltip=alt.value(None),
-        opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+        #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
     ).transform_filter(
         (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis] != 0)
-    ).add_params(hover_selection, selection)
+    )#.add_params(hover_selection)
     charts_to_layer.append(xerrorbars)
 
     if plot_yaxis+"_ul" in master_df.keys():
@@ -348,12 +401,16 @@ if show_xerr:
             x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
             y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             x2=alt.X2(plot_xaxis+"_high", title=""),
-            color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+            size=alt.value(500),
+            #stroke=alt.value('black'),
+            color=strokeErrorCondition,
+            #color=alt.Color('source_pretty', scale=alt.Scale(
+            #domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
             tooltip=alt.value(None),
-            opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+            #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
         ).transform_filter(
             (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan')
-        ).add_params(hover_selection, selection)
+        )#.add_params(hover_selection)
         charts_to_layer.append(xup_errorbars)
 
 if show_yerr:
@@ -363,12 +420,17 @@ if show_yerr:
         y2=alt.Y2(plot_yaxis+"_high", title=""),
         # yError=alt.YError(plot_yaxis + '_low'),
         # yError2=alt.YError(plot_yaxis + '_high')
-        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+        #stroke=alt.value('black'),
+        #strokeWidth=strokeWidthCondition,
+        size=alt.value(500),
+        color=strokeErrorCondition,
+        # color=alt.Color('source_pretty', scale=alt.Scale(
+        #     domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
         tooltip=alt.value(None),
-        opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+        #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
         ).transform_filter(
         (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis] != 0)
-        ).add_params(hover_selection, selection)
+        )#.add_params(hover_selection)
     charts_to_layer.append(yerrorbars)
 
     if plot_xaxis+"_ul" in master_df.keys():
@@ -376,30 +438,40 @@ if show_yerr:
             x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
             y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             y2=alt.Y2(plot_yaxis+"_high", title=""),
-            color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+            size=alt.value(500),
+            #stroke=alt.value('black'),
+            #strokeWidth=strokeWidthCondition,
+            color=strokeErrorCondition,
+            # color=alt.Color('source_pretty', scale=alt.Scale(
+            # domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
             tooltip=alt.value(None),
-            opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+            #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
             ).transform_filter(
             (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan')
-            ).add_params(hover_selection, selection)
+            )#.add_params(hover_selection)
         charts_to_layer.append(yup_errorbars)
+
+
+charts_to_layer.append(base_chart)
 
 # chart2 = alt.Chart(dsph_m31).mark_circle().encode(
 #      x=alt.X(plot_xaxis, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
 #      y=alt.Y(plot_yaxis, scale=alt.Scale(type=type_y, reverse=reverse_y), title=tab_desc[plot_yaxis]['label']),
 #      color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host'))
 #      ).interactive()
-
-
+print(charts_to_layer)
+#charts_to_layer = np.concatenate([charts_to_layer, errors_to_layer])
+#print(charts_to_layer.reverse())
+#st.altair_chart(errors_to_layer[0], use_container_width=True)
 def plot_dwarf_all():
-    st.altair_chart(alt.layer(*charts_to_layer).configure_legend(
-titleFontSize=18,
-labelFontSize=10
-).resolve_legend(color='independent', size='independent'), use_container_width=True)
-
+    #layered = base_chart+xerrorbars
+    layered = alt.layer(*charts_to_layer).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
+    #st.altair_chart(alt.layer(*charts_to_layer).add_params(selection_x, selection_y).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0), use_container_width=True)
+    st.altair_chart(layered, use_container_width=True)
 with st.container():
     plot_dwarf_all()
 
+#st.altair_chart(charts_to_layer[1], use_container_width=True)
 
 #st.toast('Welcome to the Local Volume Database!')
 
