@@ -16,7 +16,8 @@ import astropy.coordinates as coord
 import local_volume_database # idk what this does yet
 
 #st.set_page_config(layout="centered")
-
+table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
+table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
 
 # ---------------------load data---------------------- #
 @st.cache_data
@@ -44,14 +45,18 @@ def load_data():
     #comb['mass_HI_ul'] = np.log10(235600*comb['flux_HI_ul']*(comb['distance']/1000.)**2)
     # Combine all tables except dwarf_all into one big dataframe
     tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
-    table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
-    
-    combined_df = pd.concat([table.assign(source=name) for table, name in zip(tables, table_names)], ignore_index=True)
+    combined_df = pd.concat([table.assign(source=name, source_pretty=name_pretty) for table, name, name_pretty in zip(tables, table_names, table_names_pretty)], ignore_index=True)
 
     for key in combined_df.keys():
         if (key+'_em' in combined_df.keys()):
             combined_df[key+"_low"] = combined_df[key]-combined_df[key+'_em']
             combined_df[key+"_low"] = combined_df[key+"_low"].fillna(0)
+            # print(np.min(combined_df[key]))
+            
+            # in rare cases, the lower error causes a value that should be positive (like sersic index or vlos,systemic) to be negative (ie if author reports symmetric errorbars)
+            # in these cases, need to set these lower error to 0 so that log plots don't break when errorbars are displayed
+            if np.min(combined_df[key])>0 and (combined_df[key+"_low"]<0).any():
+                combined_df.loc[combined_df[key+"_low"] < 0, key+"_low"] = 0
         if (key+'_ep' in combined_df.keys()):
             combined_df[key+"_high"] = combined_df[key]+combined_df[key+'_ep']
             combined_df[key+"_high"] = combined_df[key+"_high"].fillna(0)
@@ -59,6 +64,8 @@ def load_data():
             # print(32*np.nanstd(dwarf_all[key]))
             combined_df[key+"_upper"] = np.ones(len(combined_df[key+'_ul']))*1000*np.nanstd(combined_df[key])
             combined_df[key+"_upper"] = combined_df[key+"_upper"].fillna(0)
+
+        
         # for key in dwarf_all.keys():
         #     if key.endswith('_em') or key.endswith('_ep'):
         #         dwarf_all[key].fillna(0, inplace=True)
@@ -80,7 +87,7 @@ tab_desc = tab_desc.T.to_dict(index='property')
 valid_plot_cols = ['key', 'ra', 'dec', 'name', 'host', 'confirmed_real', 
                    'confirmed_dwarf', 'rhalf',  'position_angle', 'ellipticity', 
                    'distance_modulus', 'apparent_magnitude_v', 
-                   'vlos_systemic', 'vlos_sigma', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
+                   'vlos_systemic', 'vlos_sigma', 'vlos_sigma_em', 'vlos_sigma_ep', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
                 'metallicity_spectroscopic_sigma', 'rcore', 'rking', 'rad_sersic', 
                 'n_sersic', 'age', 'metallicity_isochrone', 'flux_HI', 'metallicity_photometric', 
                 'metallicity_photometric_sigma',  'M_V', 'mass_stellar', 'distance',
@@ -155,11 +162,11 @@ st.session_state.my_key1=st.session_state.my_key1
 st.session_state.my_key2=st.session_state.my_key2
 with st.sidebar:
     with st.container(border=True, key='xcont') as xcont:
-        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, index=None, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
+        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, index=1, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
         #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
         type_x, reverse_x, xlabel, channel_x, show_xerr = get_axis_specs(plot_xaxis, 'xaxis')
     with st.container(border=True, key='ycont') as ycont:
-        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, index=None, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
+        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, index=2, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr = get_axis_specs(plot_yaxis, 'yaxis')
 # st.selectbox(
@@ -171,10 +178,10 @@ with st.sidebar:
 
 
 # ---------------------filtering---------------------- #
-# filter by host
-# host = st.sidebar.multiselect('Host', dwarf_all['host'].unique())
-# if host:
-#     dwarf_all = dwarf_all[dwarf_all['host'].isin(host)]
+#filter by source
+source = st.sidebar.multiselect('Source', table_names_pretty)
+if source:
+    master_df = master_df[master_df['source_pretty'].isin(source)]
 # # filter by confirmed dwarf
 # confirmed_dwarf = st.sidebar.multiselect('Confirmed Dwarf', dwarf_all['confirmed_dwarf'].unique())
 # if confirmed_dwarf:
@@ -195,8 +202,27 @@ with st.sidebar:
 
 
 #-----create selections and conditions for interactivity-----#
+color_scale = 'tableau10'
+selection = alt.selection_point(fields=['source_pretty'], bind='legend',nearest=False,)
 
-selection = alt.selection_point(fields=['host'], bind='legend',nearest=False,)
+hover_selection = alt.selection_point(on='mouseover', nearest=False, empty=False)
+
+color = alt.condition(
+    hover_selection,
+    alt.value('black'),
+    alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source', symbolFillColor='black'), sort=table_names_pretty)
+)
+sizeCondition=alt.condition(
+    hover_selection,
+    alt.SizeValue(100),
+    alt.SizeValue(10)
+)
+
+strokeWidthCondition=alt.condition(
+    hover_selection,
+    alt.StrokeWidthValue(4),
+    alt.StrokeWidthValue(0)
+)
 
 
 #---------------------user select what values to show in tooltip----------------------#
@@ -212,14 +238,21 @@ with st.sidebar:
 
     #st.write(tooltip)
 # ---------------------plot---------------------- #
+
+
 #print(tab_desc['ra'])
+print(np.unique(master_df['source']))
 charts_to_layer = []
 base_chart = alt.Chart(master_df).mark_point(filled=True, opacity=1).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
-     color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Source')),
-     tooltip = tooltip
-     )#.add_params(selection).transform_filter(selection)
+     color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source', symbolFillColor='black'), sort=table_names_pretty),
+     tooltip = tooltip,
+     #size=sizeCondition,
+     strokeWidth=strokeWidthCondition,
+     size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0)),
+
+     ).add_params(hover_selection, selection)#.transform_filter(selection)
 
 charts_to_layer.append(base_chart)
 
@@ -229,18 +262,18 @@ charts_to_layer.append(base_chart)
 if plot_yaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
 
-    yul = alt.Chart(master_df).mark_point(shape="arrow", filled=True, size=500, angle=180, strokeWidth=0).encode(
+    yul = alt.Chart(master_df).mark_point(shape="arrow", filled=True, size=500, angle=180, strokeWidth=10).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         #y2=alt.Y2(plot_yaxis+"_upper"),
-        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
+        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
         tooltip=tooltip,
         
         yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
-        
+        size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
-        (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0)
-    )
+        (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan')
+    ).add_params(hover_selection, selection)
     charts_to_layer.append(yul)
 
 if plot_xaxis+"_ul" in master_df.keys():
@@ -249,15 +282,16 @@ if plot_xaxis+"_ul" in master_df.keys():
     xul = alt.Chart(master_df).mark_point(shape="arrow", filled=True).encode(
         x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-        size=alt.value(10),
-        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
+        #size=alt.value(500),
+        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
         tooltip=tooltip,
         angle=alt.value(-90),
         xOffset=alt.value(-10),
-        strokeWidth=alt.value(10)
+        strokeWidth=alt.value(10),
+        size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
-        (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0)
-    )
+        (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan')
+    ).add_params(hover_selection, selection)
     charts_to_layer.append(xul)
 
 if show_xerr:
@@ -265,11 +299,12 @@ if show_xerr:
         x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         x2=alt.X2(plot_xaxis+"_high", title=""),
-        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
-        tooltip=alt.value(None)
+        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+        tooltip=alt.value(None),
+        opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
     ).transform_filter(
-        (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
-    )
+        (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis] != 0)
+    ).add_params(hover_selection, selection)
     charts_to_layer.append(xerrorbars)
 
     if plot_yaxis+"_ul" in master_df.keys():
@@ -277,11 +312,12 @@ if show_xerr:
             x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
             y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             x2=alt.X2(plot_xaxis+"_high", title=""),
-            color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
-            tooltip=alt.value(None)
+            color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+            tooltip=alt.value(None),
+            opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
         ).transform_filter(
-            (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0)
-        )
+            (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan')
+        ).add_params(hover_selection, selection)
         charts_to_layer.append(xup_errorbars)
 
 if show_yerr:
@@ -291,11 +327,12 @@ if show_yerr:
         y2=alt.Y2(plot_yaxis+"_high", title=""),
         # yError=alt.YError(plot_yaxis + '_low'),
         # yError2=alt.YError(plot_yaxis + '_high')
-        color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
-        tooltip=alt.value(None)
+        color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+        tooltip=alt.value(None),
+        opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
         ).transform_filter(
-        (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0)
-        )
+        (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis] != 0)
+        ).add_params(hover_selection, selection)
     charts_to_layer.append(yerrorbars)
 
     if plot_xaxis+"_ul" in master_df.keys():
@@ -303,11 +340,12 @@ if show_yerr:
             x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
             y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             y2=alt.Y2(plot_yaxis+"_high", title=""),
-            color=alt.Color('source', scale=alt.Scale(scheme='tableau20'), legend=None),
-            tooltip=alt.value(None)
+            color=alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=None, sort=table_names_pretty),
+            tooltip=alt.value(None),
+            opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
             ).transform_filter(
-            (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0)
-            )
+            (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan')
+            ).add_params(hover_selection, selection)
         charts_to_layer.append(yup_errorbars)
 
 # chart2 = alt.Chart(dsph_m31).mark_circle().encode(
@@ -334,7 +372,7 @@ with st.container():
 
 
 st.text('all dwarfs')
-st.dataframe(dwarf_all, use_container_width=True) # use_container_width doesn't work??
+st.dataframe(master_df, use_container_width=True) # use_container_width doesn't work??
 #st.text('dSphs in MW')
 #st.dataframe(dsph_mw, use_container_width=False)
 #st.dataframe(misc_host)
