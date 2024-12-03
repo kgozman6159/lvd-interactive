@@ -87,7 +87,7 @@ tab_desc = tab_desc.T.to_dict(index='property')
 valid_plot_cols = ['key', 'ra', 'dec', 'name', 'host', 'confirmed_real', 
                    'confirmed_dwarf', 'rhalf',  'position_angle', 'ellipticity', 
                    'distance_modulus', 'apparent_magnitude_v', 
-                   'vlos_systemic', 'vlos_sigma', 'vlos_sigma_em', 'vlos_sigma_ep', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
+                   'vlos_systemic', 'vlos_sigma', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
                 'metallicity_spectroscopic_sigma', 'rcore', 'rking', 'rad_sersic', 
                 'n_sersic', 'age', 'metallicity_isochrone', 'flux_HI', 'metallicity_photometric', 
                 'metallicity_photometric_sigma',  'M_V', 'mass_stellar', 'distance',
@@ -220,7 +220,7 @@ sizeCondition=alt.condition(
 
 strokeWidthCondition=alt.condition(
     hover_selection,
-    alt.StrokeWidthValue(4),
+    alt.StrokeWidthValue(100),
     alt.StrokeWidthValue(0)
 )
 
@@ -242,6 +242,42 @@ with st.sidebar:
 
 #print(tab_desc['ra'])
 print(np.unique(master_df['source']))
+
+# selection_x = alt.selection_interval(
+#     bind='scales',
+#     encodings=["x"],
+#     zoom="wheel![event.altKey]",
+# )
+# selection_y = alt.selection_interval(
+#     bind='scales',
+#     encodings=["y"],
+#     zoom="wheel![event.shiftKey]",
+# )
+
+# selection_both = alt.selection_interval(
+#     bind='scales',
+#     encodings=["x", "y"],
+#     zoom="wheel![event.ctrlKey & !event.shiftKey & !event.altKey]",
+# )
+
+selection_x = alt.selection_interval(
+    bind='scales',
+    encodings=["x"],
+    zoom="wheel![event.altKey]",
+)
+
+selection_y = alt.selection_interval(
+    bind='scales',
+    encodings=["y"],
+    zoom="wheel![event.shiftKey]",
+)
+
+# selection_both = alt.selection_interval(
+#     bind='scales',
+#     encodings=["x", "y"],
+#     zoom="wheel!",
+# )
+
 charts_to_layer = []
 base_chart = alt.Chart(master_df).mark_point(filled=True, opacity=1).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
@@ -252,7 +288,7 @@ base_chart = alt.Chart(master_df).mark_point(filled=True, opacity=1).encode(
      strokeWidth=strokeWidthCondition,
      size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0)),
 
-     ).add_params(hover_selection, selection)#.transform_filter(selection)
+     ).add_params(hover_selection, selection, selection_x, selection_y)#.transform_filter(selection)
 
 charts_to_layer.append(base_chart)
 
@@ -359,7 +395,7 @@ def plot_dwarf_all():
     st.altair_chart(alt.layer(*charts_to_layer).configure_legend(
 titleFontSize=18,
 labelFontSize=10
-).resolve_legend(color='independent', size='independent').interactive(), use_container_width=True)
+).resolve_legend(color='independent', size='independent'), use_container_width=True)
 
 with st.container():
     plot_dwarf_all()
