@@ -351,7 +351,7 @@ if plot_yaxis+"_ul" in master_df.keys():
         angle=alt.value(180),
         stroke=alt.value('black'),
         strokeWidth=strokeWidthCondition,
-        #size=alt.value(50),
+        size=alt.value(500),
         yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
         #size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
