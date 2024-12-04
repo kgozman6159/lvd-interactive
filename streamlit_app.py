@@ -17,31 +17,30 @@ import local_volume_database # idk what this does yet
 from collections import OrderedDict
 st.set_page_config(layout="wide")
 
-source = pd.DataFrame({
-    "yield_error": [7.5522, 6.9775, 3.9167, 11.9732],
-    "yield_center": [32.4, 30.96667, 33.966665, 30.45],
-    "variety": ["Glabron", "Manchuria", "No. 457", "No. 462"],
-})
+import altair as alt
+from vega_datasets import data
 
-bar = alt.Chart(source).mark_errorbar().encode(
-    x=alt.X("yield_center:Q").scale(zero=False).title("yield"),
-    xError=("yield_error:Q"),
-    y=alt.Y("variety:N"),
-).transform_filter(
-        (alt.datum["yield_error"] != 0))
+# cars = data.cars.url
 
-point = alt.Chart(source).mark_point(
-    filled=True,
-    color="green",
-    opacity=1
-).encode(
-    alt.X("yield_center:Q"),
-    alt.Y("variety:N"),
-)
+# search_input = alt.selection_point(
+#     fields=['Name'],
+#     empty=False,  # Start with no points selected
+#     bind=alt.binding(
+#         input='search',
+#         placeholder="Car model",
+#         name='Search ',
+#     )
+# )
+# chart = alt.Chart(data.cars.url).mark_point(size=60).encode(
+#     x='Horsepower:Q',
+#     y='Miles_per_Gallon:Q',
+#     tooltip='Name:N',
+#     opacity=alt.when(search_input).then(alt.value(1)).otherwise(alt.value(.1)),
+# ).add_params(
+#     search_input
+# )
 
-st.altair_chart(alt.layer(bar, point))
-
-
+# st.altair_chart(chart, use_container_width=True)
 
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
@@ -189,11 +188,11 @@ st.session_state.my_key1=st.session_state.my_key1
 st.session_state.my_key2=st.session_state.my_key2
 with st.sidebar:
     with st.container(border=True, key='xcont') as xcont:
-        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, index=1, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
+        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
         #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
         type_x, reverse_x, xlabel, channel_x, show_xerr = get_axis_specs(plot_xaxis, 'xaxis')
     with st.container(border=True, key='ycont') as ycont:
-        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, index=2, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
+        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr = get_axis_specs(plot_yaxis, 'yaxis')
 # st.selectbox(
@@ -237,7 +236,7 @@ hover_selection = alt.selection_point(on='mouseover', nearest=False, empty=False
 color = alt.condition(
     hover_selection,
     alt.value('black'),
-    alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source', symbolFillColor='black'), sort=table_names_pretty)
+    alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source'), sort=table_names_pretty)
 )
 # sizeCondition=alt.condition(
 #     hover_selection,
@@ -265,6 +264,8 @@ strokeErrorCondition=alt.condition(
 with st.sidebar:
     def tooltip_items():
         tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'])
+        # if tooltip_select:
+        #     st.toast(f"Selected {len(tooltip_select)} properties to display in the tooltip")
         #tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
         return tooltip_select
 # print([tab_desc[x]['desc'] for x in tooltip_select])
@@ -272,6 +273,22 @@ with st.sidebar:
     tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_items()]
 
     #st.write(tooltip)
+
+#---------------------user select and highlight a certain galaxy by name using st.multiselect----------------------#
+
+def gal_search():
+
+    non_nan_galaxies = master_df.dropna(subset=[plot_xaxis, plot_yaxis])['name'].tolist()
+    #st.write("Galaxies with non-nan values for selected x and y axis columns:", non_nan_galaxies)
+    highlight = st.multiselect('Highlight a galaxy by name', non_nan_galaxies, format_func=lambda x: x)
+    return highlight
+selected_gals = gal_search()
+
+filtered_df = master_df[master_df['name'].isin(selected_gals)]
+st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
+    # print(highlight)
+    # print(master_df['name'].unique())
+
 # ---------------------plot---------------------- #
 
 
@@ -320,17 +337,34 @@ print(unique_sources)
 charts_to_layer = []
 errors_to_layer = []
 
-base_chart = alt.Chart(master_df).mark_point(filled=True, opacity=1, size=50).encode(
+# search_input = alt.param(
+#     value='',
+#     bind=alt.binding(
+#         input='search',
+#         placeholder="Galaxy",
+#         name='Search ',
+#     )
+# )
+# search_matches = alt.expr.test(alt.expr.regexp(search_input, "i"), alt.datum.name)
+
+
+if len(selected_gals)!=0:
+    opacity = alt.when(
+        alt.FieldOneOfPredicate(field='name', oneOf=selected_gals)).then(alt.value(1)).otherwise(alt.value(0.1))
+else:
+    opacity = alt.value(1)
+base_chart = alt.Chart(master_df).mark_point(filled=True, size=50).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
-     color=alt.Color('source_pretty',scale=alt.Scale(scheme=color_scale, domain=table_names_pretty)),
-                     
+     color=alt.Color('source_pretty',scale=alt.Scale(scheme=color_scale, domain=table_names_pretty), legend=alt.Legend(title='System Type')),
+     #opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.05)),
+     #opacity=opacity,
      tooltip = tooltip,
      #size=sizeCondition,
      strokeWidth=strokeWidthCondition,
      stroke=alt.value('black'),
      #size=alt.when(selection).then(alt.value(100)).otherwise(alt.value(0)),
-     shape=alt.Shape('source_pretty', scale=alt.Scale(scheme=color_scale, domain=table_names_pretty)),
+     shape=alt.Shape('source_pretty', scale=alt.Scale(scheme=color_scale, domain=table_names_pretty), legend=alt.Legend(title='System Type')),
      #order=alt.Order('source_pretty'),
      ).add_params(hover_selection, selection_x, selection_y)#.transform_filter(selection)
 
@@ -452,7 +486,20 @@ if show_yerr:
         charts_to_layer.append(yup_errorbars)
 
 
+
+# filter_chart = base_chart.encode(
+#     opacity=alt.when(
+#         alt.Predicate(alt.FieldOneOfPredicate(field='name', oneOf=selected_gals))).then(alt.value(1)).otherwise(alt.value(0))
+#         )
+        
+
+#charts_to_layer.append(highlight_chart)
+
+
+
 charts_to_layer.append(base_chart)
+#charts_to_layer.append(filter_chart)
+#charts_to_layer.append(filter_chart)
 
 # chart2 = alt.Chart(dsph_m31).mark_circle().encode(
 #      x=alt.X(plot_xaxis, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
@@ -465,11 +512,14 @@ print(charts_to_layer)
 #st.altair_chart(errors_to_layer[0], use_container_width=True)
 def plot_dwarf_all():
     #layered = base_chart+xerrorbars
-    layered = alt.layer(*charts_to_layer).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
+    layered = alt.layer(*charts_to_layer).encode(opacity=opacity).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
     #st.altair_chart(alt.layer(*charts_to_layer).add_params(selection_x, selection_y).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0), use_container_width=True)
     st.altair_chart(layered, use_container_width=True)
+    #st.write(event)
+    #return event
 with st.container():
     plot_dwarf_all()
+    
 
 #st.altair_chart(charts_to_layer[1], use_container_width=True)
 
