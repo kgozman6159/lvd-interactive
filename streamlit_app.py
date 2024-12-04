@@ -18,29 +18,32 @@ from collections import OrderedDict
 st.set_page_config(layout="wide")
 
 import altair as alt
-from vega_datasets import data
+# from vega_datasets import data
 
-# cars = data.cars.url
+# def load_data():
 
-# search_input = alt.selection_point(
-#     fields=['Name'],
-#     empty=False,  # Start with no points selected
+#     return data.cars()
+# cars = load_data()
+# search_input = alt.param(
+#     value='',
 #     bind=alt.binding(
 #         input='search',
 #         placeholder="Car model",
 #         name='Search ',
 #     )
 # )
-# chart = alt.Chart(data.cars.url).mark_point(size=60).encode(
+# search_matches = alt.expr.test(alt.expr.regexp(search_input, "i"), alt.datum.Name)
+
+# chart2 = alt.Chart(cars).mark_point(size=60).encode(
 #     x='Horsepower:Q',
 #     y='Miles_per_Gallon:Q',
 #     tooltip='Name:N',
-#     opacity=alt.when(search_input).then(alt.value(1)).otherwise(alt.value(.1)),
-# ).add_params(
-#     search_input
-# )
+#     opacity=alt.when(search_matches).then(alt.value(1)).otherwise(alt.value(0.5)),
+# ).add_params(search_input)
 
-# st.altair_chart(chart, use_container_width=True)
+# st.button("Clear search")
+
+# st.altair_chart(chart2)
 
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
@@ -233,29 +236,39 @@ selection = alt.selection_point(fields=['source_pretty'], bind='legend',nearest=
 
 hover_selection = alt.selection_point(on='mouseover', nearest=False, empty=False)
 
-color = alt.condition(
-    hover_selection,
-    alt.value('black'),
-    alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source'), sort=table_names_pretty)
-)
+# color = alt.condition(
+#     hover_selection,
+#     alt.value('black'),
+#     alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source'), sort=table_names_pretty)
+# )
+
+color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', 
+                                                                               scale=alt.Scale(scheme=color_scale), 
+                                                                               legend=alt.Legend(title='Source'), 
+                                                                               sort=table_names_pretty))
 # sizeCondition=alt.condition(
 #     hover_selection,
 #     alt.SizeValue(100),
 #     alt.SizeValue(0)
 # )
 
-strokeWidthCondition=alt.condition(
-    hover_selection,
-    alt.StrokeWidthValue(1),
-    alt.StrokeWidthValue(0)
-)
+# strokeWidthCondition=alt.condition(
+#     hover_selection,
+#     alt.StrokeWidthValue(1),
+#     alt.StrokeWidthValue(0)
+# )
 
-strokeErrorCondition=alt.condition(
-    hover_selection,
-    alt.value('black'),
-    alt.Color('source_pretty', scale=alt.Scale(
-            domain=table_names_pretty, scheme=color_scale), title='Source', legend=None)
-)
+strokeWidthCondition=alt.when(hover_selection).then(alt.StrokeWidthValue(1)).otherwise(alt.StrokeWidthValue(0))
+
+# strokeErrorCondition=alt.condition(
+#     hover_selection,
+#     alt.value('black'),
+#     alt.Color('source_pretty', scale=alt.Scale(
+#             domain=table_names_pretty, scheme=color_scale), title='Source', legend=None)
+# )
+
+strokeErrorCondition=alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
+            domain=table_names_pretty, scheme=color_scale), title='Source', legend=None))
 
 
 
@@ -346,7 +359,7 @@ errors_to_layer = []
 #     )
 # )
 # search_matches = alt.expr.test(alt.expr.regexp(search_input, "i"), alt.datum.name)
-
+when_hover = alt.when(hover_selection, empty=False)
 
 if len(selected_gals)!=0:
     opacity = alt.when(
@@ -386,6 +399,7 @@ if plot_yaxis+"_ul" in master_df.keys():
         stroke=alt.value('black'),
         strokeWidth=strokeWidthCondition,
         size=alt.value(500),
+        order=when_hover.then(alt.value(1)).otherwise(alt.value(0)),
         yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
         #size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
@@ -510,9 +524,10 @@ print(charts_to_layer)
 #charts_to_layer = np.concatenate([charts_to_layer, errors_to_layer])
 #print(charts_to_layer.reverse())
 #st.altair_chart(errors_to_layer[0], use_container_width=True)
+
 def plot_dwarf_all():
     #layered = base_chart+xerrorbars
-    layered = alt.layer(*charts_to_layer).encode(opacity=opacity).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
+    layered = alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0))).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
     #st.altair_chart(alt.layer(*charts_to_layer).add_params(selection_x, selection_y).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0), use_container_width=True)
     st.altair_chart(layered, use_container_width=True)
     #st.write(event)
