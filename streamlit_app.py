@@ -19,6 +19,7 @@ st.set_page_config(layout="wide")
 
 import altair as alt
 import re
+from webcolors import name_to_hex
 
 #rom vega_datasets import data
 
@@ -116,7 +117,7 @@ def load_data():
 
         combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
-        
+        combined_df = combined_df.iloc[::-1]
         # for key in dwarf_all.keys():
         #     if key.endswith('_em') or key.endswith('_ep'):
         #         dwarf_all[key].fillna(0, inplace=True)
@@ -260,9 +261,18 @@ if source:
 
 
 #-----create selections and conditions for interactivity-----#
-color_scale = 'tableau10'
+#color_scale = st.selectbox('Color scale', ['viridis', 'inferno', 'plasma', 'magma', 'cividis', 'accent', 'category10', 'category20', 'category20b', 'category20c', 'dark2', 'paired', 'pastel1', 'pastel2', 'set1', 'set2', 'set3', 'tableau10', 'tableau20'])
 selection = alt.selection_point(fields=['source_pretty'], bind='legend',nearest=False,)
 
+print(alt.Color(scale=alt.Scale(scheme='category10')).to_dict()['scale']['scheme'])
+default_colors = ['blue', 'orange', 'green', 'red', 'olive', 'brown', 'pink', 'darkgreen', 'purple', 'cyan']
+hex_codes = [name_to_hex(x) for x in default_colors]
+hex_codes = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac']
+with st.sidebar:
+    with st.popover("Color selection", use_container_width=False):
+        cols = st.columns(2, vertical_alignment="top", gap='medium')
+        range_ = [cols[x>4].color_picker('%s'%table_names_pretty[x],hex_codes[x], key="color%i"%x) for x in range(10)]
+#print(range_)
 hover_selection = alt.selection_point(on='mouseover', nearest=False, empty=False)
 
 # color = alt.condition(
@@ -271,8 +281,14 @@ hover_selection = alt.selection_point(on='mouseover', nearest=False, empty=False
 #     alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source'), sort=table_names_pretty)
 # )
 
+# color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', 
+#                                                                                scale=alt.Scale(scheme=color_scale), 
+#                                                                                legend=alt.Legend(title='Source'), 
+#                                                                                sort=table_names_pretty))
+
+
 color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', 
-                                                                               scale=alt.Scale(scheme=color_scale), 
+                                                                               scale=alt.Scale(range=range_), 
                                                                                legend=alt.Legend(title='Source'), 
                                                                                sort=table_names_pretty))
 # sizeCondition=alt.condition(
@@ -297,7 +313,7 @@ strokeWidthCondition=alt.when(hover_selection).then(alt.StrokeWidthValue(1)).oth
 # )
 
 strokeErrorCondition=alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
-            domain=table_names_pretty, scheme=color_scale), title='Source', legend=None))
+            domain=table_names_pretty, range=range_), title='Source', legend=None))
 
 
 
@@ -401,7 +417,7 @@ else:
 base_chart = alt.Chart(master_df).mark_point(filled=True, size=50).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
-     color=alt.Color('source_pretty',scale=alt.Scale(scheme=color_scale, domain=table_names_pretty), legend=alt.Legend(title='System Type')),
+     color=alt.Color('source_pretty',scale=alt.Scale(domain=table_names_pretty, range=range_), legend=alt.Legend(title='System Type')),
      #opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.05)),
      #opacity=opacity,
      tooltip = tooltip,
@@ -411,7 +427,7 @@ base_chart = alt.Chart(master_df).mark_point(filled=True, size=50).encode(
      #order=alt.value(0),
      #href=alt.when(alt.FieldOneOfPredicate(field=xref, oneOf=[0,1])).then(alt.Href("www.google.com:N")).otherwise(xref),
      #size=alt.when(selection).then(alt.value(100)).otherwise(alt.value(0)),
-     shape=alt.Shape('source_pretty', scale=alt.Scale(scheme=color_scale, domain=table_names_pretty), legend=alt.Legend(title='System Type')),
+     shape=alt.Shape('source_pretty', scale=alt.Scale(domain=table_names_pretty), legend=alt.Legend(title='System Type')),
      #order=alt.Order('source_pretty'),
      ).add_params(selection_click, hover_selection, selection_x, selection_y)#.transform_filter(selection)
 
