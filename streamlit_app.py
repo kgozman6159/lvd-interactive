@@ -15,11 +15,18 @@ import astropy.coordinates as coord
 
 import local_volume_database # idk what this does yet
 from collections import OrderedDict
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide",
+    page_title="Local Volume Database",
+    page_icon="🌌",
+    initial_sidebar_state="expanded"
+)
 
 import altair as alt
 import re
 from webcolors import name_to_hex
+
+from streamlit_extras.badges import badge 
+from streamlit_theme import st_theme
 
 #rom vega_datasets import data
 
@@ -117,7 +124,7 @@ def load_data():
 
         combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
-        combined_df = combined_df.iloc[::-1]
+        #combined_df = combined_df.iloc[::-1]
         # for key in dwarf_all.keys():
         #     if key.endswith('_em') or key.endswith('_ep'):
         #         dwarf_all[key].fillna(0, inplace=True)
@@ -125,14 +132,26 @@ def load_data():
     return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
 
 dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, master_df = load_data()
+
+# ---------get info about master_df before filtering--------- #
+TOTAL_NUM_SYSTEMS = len(master_df)
+ALL_SYSTEM_NAMES = master_df['name'].unique()
+ALL_SOURCES = master_df['source_pretty'].copy()
+source_mapping = {name: idx for idx, name in enumerate(table_names_pretty)} # turn each system source (MW Dwarfs, M31 Dwarfs, etc. into a number 0-9)
+all_source_indices = master_df['source_pretty'].copy().map(source_mapping) # for mapping to colors later
+
+#ALL_SOURCES = master_df['source_pretty_num'].copy()
 print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len(dsph_lf_distant)+len(gc_ambiguous)+len(gc_mw_new)+len(gc_harris)+len(gc_dwarf_hosted)+len(gc_other)+len(candidate),len(misc_host))
 #st.dataframe(dwarf_all, use_container_width=True) # use_container_width doesn't work??
 #st.dataframe(master_df, use_container_width=True)
+
+theme = st_theme()
+print(theme)
 # ---------------------dictionary of column labels and descriptions---------------------- #
 #print(dwarf_all['M_V_high'])
 tab_desc = pd.read_csv('table_descriptions.csv', index_col='property', keep_default_na=False)
 tab_desc['reference'] = tab_desc['reference'].replace('N/A', '')
-print(tab_desc['reference'])
+#print(tab_desc['reference'])
 #print(tab_desc.iloc[0].unit)
 tab_desc = tab_desc.T.to_dict(index='property')
 # print(tab_desc.keys())
@@ -241,6 +260,68 @@ with st.sidebar:
 source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty)
 if source:
     master_df = master_df[master_df['source_pretty'].isin(source)]
+
+hex_codes = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac']
+with st.sidebar:
+    with st.popover("Color selection", use_container_width=False):
+        cols = st.columns(2, vertical_alignment="top", gap='medium')
+        range_ = [cols[x>4].color_picker('%s'%table_names_pretty[x],hex_codes[x], key="color%i"%x) for x in range(10)]
+
+string = ""
+for i in range(len(hex_codes)):
+    string+="""
+    <style>
+        span[data-baseweb="tag"][aria-label="%s, close by backspace"]{
+            background-color: %s;
+        }
+    </style>
+    """%(table_names_pretty[i], range_[i])
+st.markdown(string, unsafe_allow_html=True)
+
+#---------------------user select and highlight a certain galaxy by name using st.multiselect----------------------#
+
+def gal_search():
+
+    non_nan_galaxies = master_df.dropna(subset=[plot_xaxis, plot_yaxis])['name'].tolist()
+    #st.write("Galaxies with non-nan values for selected x and y axis columns:", non_nan_galaxies)
+    highlight = st.multiselect('Highlight a galaxy by name', non_nan_galaxies, format_func=lambda x: x)
+    return highlight
+selected_gals = gal_search()
+
+filtered_df = master_df[master_df['name'].isin(selected_gals)]
+st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
+    # print(highlight)
+    # print(master_df['name'].unique())
+
+#print(selected_gals)
+
+string = ""
+for i in range(TOTAL_NUM_SYSTEMS-1):
+    source_index = all_source_indices[i]
+    string+="""
+    <style>
+        span[data-baseweb="tag"][aria-label="%s, close by backspace"]{
+            background-color: %s;
+        }
+    </style>
+    """%(ALL_SYSTEM_NAMES[i], range_[source_index])
+st.markdown(string, unsafe_allow_html=True)
+
+# st.markdown("""
+#     <style>
+#         span[data-baseweb="tag"][aria-label="MW Dwarfs, close by backspace"]{
+#             background-color: %s;
+#         }
+#         span[data-baseweb="tag"][aria-label="M31 Dwarfs, close by backspace"]{
+#             background-color: %s;
+#         }
+#         span[data-baseweb="tag"][aria-label="option3, close by backspace"]{
+#             background-color: %s;
+#         }
+#     </style>
+#     """%(hex_codes[0], hex_codes[1], hex_codes[2]), unsafe_allow_html=True)
+
+
 # # filter by confirmed dwarf
 # confirmed_dwarf = st.sidebar.multiselect('Confirmed Dwarf', dwarf_all['confirmed_dwarf'].unique())
 # if confirmed_dwarf:
@@ -264,14 +345,11 @@ if source:
 #color_scale = st.selectbox('Color scale', ['viridis', 'inferno', 'plasma', 'magma', 'cividis', 'accent', 'category10', 'category20', 'category20b', 'category20c', 'dark2', 'paired', 'pastel1', 'pastel2', 'set1', 'set2', 'set3', 'tableau10', 'tableau20'])
 selection = alt.selection_point(fields=['source_pretty'], bind='legend',nearest=False,)
 
-print(alt.Color(scale=alt.Scale(scheme='category10')).to_dict()['scale']['scheme'])
-default_colors = ['blue', 'orange', 'green', 'red', 'olive', 'brown', 'pink', 'darkgreen', 'purple', 'cyan']
-hex_codes = [name_to_hex(x) for x in default_colors]
-hex_codes = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac']
-with st.sidebar:
-    with st.popover("Color selection", use_container_width=False):
-        cols = st.columns(2, vertical_alignment="top", gap='medium')
-        range_ = [cols[x>4].color_picker('%s'%table_names_pretty[x],hex_codes[x], key="color%i"%x) for x in range(10)]
+#print(alt.Color(scale=alt.Scale(scheme='category10')).to_dict()['scale']['scheme'])
+#default_colors = ['blue', 'orange', 'green', 'red', 'olive', 'brown', 'pink', 'darkgreen', 'purple', 'cyan']
+#hex_codes = [name_to_hex(x) for x in default_colors]
+
+
 #print(range_)
 hover_selection = alt.selection_point(on='mouseover', nearest=False, empty=False)
 
@@ -302,6 +380,14 @@ color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('
 #     alt.StrokeWidthValue(1),
 #     alt.StrokeWidthValue(0)
 # )
+if theme['base'] == 'light':
+    strokeColor = alt.value('black')
+    strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
+            domain=table_names_pretty, range=range_), title='Source', legend=None))
+else:
+    strokeColor = alt.value('white')
+    strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
+            domain=table_names_pretty, range=range_), title='Source', legend=None))
 
 strokeWidthCondition=alt.when(hover_selection).then(alt.StrokeWidthValue(1)).otherwise(alt.StrokeWidthValue(0))
 
@@ -312,8 +398,7 @@ strokeWidthCondition=alt.when(hover_selection).then(alt.StrokeWidthValue(1)).oth
 #             domain=table_names_pretty, scheme=color_scale), title='Source', legend=None)
 # )
 
-strokeErrorCondition=alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
-            domain=table_names_pretty, range=range_), title='Source', legend=None))
+
 
 
 
@@ -332,26 +417,13 @@ with st.sidebar:
 
     #st.write(tooltip)
 
-#---------------------user select and highlight a certain galaxy by name using st.multiselect----------------------#
 
-def gal_search():
-
-    non_nan_galaxies = master_df.dropna(subset=[plot_xaxis, plot_yaxis])['name'].tolist()
-    #st.write("Galaxies with non-nan values for selected x and y axis columns:", non_nan_galaxies)
-    highlight = st.multiselect('Highlight a galaxy by name', non_nan_galaxies, format_func=lambda x: x)
-    return highlight
-selected_gals = gal_search()
-
-filtered_df = master_df[master_df['name'].isin(selected_gals)]
-st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
-    # print(highlight)
-    # print(master_df['name'].unique())
 
 # ---------------------plot---------------------- #
 
 
 #print(tab_desc['ra'])
-print(np.unique(master_df['source']))
+#print(np.unique(master_df['source']))
 
 # selection_x = alt.selection_interval(
 #     bind='scales',
@@ -390,7 +462,7 @@ selection_y = alt.selection_interval(
 
 unique_sources = master_df['source_pretty'].unique()
 unique_sources = sorted(unique_sources, key=lambda x: table_names_pretty.index(x))
-print(unique_sources)
+#print(unique_sources)
 
 charts_to_layer = []
 errors_to_layer = []
@@ -423,7 +495,7 @@ base_chart = alt.Chart(master_df).mark_point(filled=True, size=50).encode(
      tooltip = tooltip,
      #size=sizeCondition,
      strokeWidth=strokeWidthCondition,
-     stroke=alt.value('black'),
+     stroke=strokeColor,
      #order=alt.value(0),
      #href=alt.when(alt.FieldOneOfPredicate(field=xref, oneOf=[0,1])).then(alt.Href("www.google.com:N")).otherwise(xref),
      #size=alt.when(selection).then(alt.value(100)).otherwise(alt.value(0)),
@@ -616,10 +688,10 @@ if plot_yaxis+"_ul" in master_df.keys():
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         #y2=alt.Y2(plot_yaxis+"_upper"),
-        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
+        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty), title='Source', legend=None),
         tooltip=tooltip,
         angle=alt.value(180),
-        stroke=alt.value('black'),
+        stroke=strokeColor,
         strokeWidth=strokeWidthCondition,
         size=alt.value(500),
         order=when_hover.then(alt.value(1)).otherwise(alt.value(0)),
@@ -637,11 +709,11 @@ if plot_xaxis+"_ul" in master_df.keys():
         x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         size=alt.value(500),
-        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
+        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty), title='Source', legend=None),
         tooltip=tooltip,
         angle=alt.value(-90),
         xOffset=alt.value(-10),
-        stroke=alt.value('black'),
+        stroke=strokeColor,
         strokeWidth=strokeWidthCondition,
         #size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
@@ -659,7 +731,7 @@ charts_to_layer.append(base_chart)
 #      y=alt.Y(plot_yaxis, scale=alt.Scale(type=type_y, reverse=reverse_y), title=tab_desc[plot_yaxis]['label']),
 #      color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host'))
 #      ).interactive()
-print(charts_to_layer)
+#print(charts_to_layer)
 #charts_to_layer = np.concatenate([charts_to_layer, errors_to_layer])
 #print(charts_to_layer.reverse())
 #st.altair_chart(errors_to_layer[0], use_container_width=True)
@@ -672,7 +744,7 @@ def plot_dwarf_all():
     
     #st.altair_chart(alt.layer(*charts_to_layer).add_params(selection_x, selection_y).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0), use_container_width=True)
     st.altair_chart(layered, use_container_width=True)#, on_select="rerun")
-    print(layered.to_dict()['params'])
+    #print(layered.to_dict()['params'])
     #st.write(event)
     #return event
 with st.container():
@@ -684,8 +756,7 @@ with st.container():
 #st.toast('Welcome to the Local Volume Database!')
 
 
-
-
+badge(type="github", name="apace7/local_volume_database/")
 
 st.text('all dwarfs')
 st.dataframe(master_df, use_container_width=True) # use_container_width doesn't work??
