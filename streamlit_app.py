@@ -18,32 +18,41 @@ from collections import OrderedDict
 st.set_page_config(layout="wide")
 
 import altair as alt
-# from vega_datasets import data
+import re
 
-# def load_data():
+#rom vega_datasets import data
 
-#     return data.cars()
-# cars = load_data()
-# search_input = alt.param(
-#     value='',
-#     bind=alt.binding(
-#         input='search',
-#         placeholder="Car model",
-#         name='Search ',
-#     )
+
+
+# cars = data.cars()
+# chart = alt.Chart(cars).mark_circle().encode(
+#         x=alt.X('Miles_per_Gallon', title=''),
+#         y='Weight_in_lbs',
+#         color='Origin'
 # )
-# search_matches = alt.expr.test(alt.expr.regexp(search_input, "i"), alt.datum.Name)
 
-# chart2 = alt.Chart(cars).mark_point(size=60).encode(
-#     x='Horsepower:Q',
-#     y='Miles_per_Gallon:Q',
-#     tooltip='Name:N',
-#     opacity=alt.when(search_matches).then(alt.value(1)).otherwise(alt.value(0.5)),
-# ).add_params(search_input)
+# text = alt.Chart().mark_text(
+#     align="center",
+#     baseline="top",
+#     fontSize=11,
+#     fontWeight=600,
+#     #color='#007bff',
+#     href='https://stackoverflow.com'
+# ).encode(
+#     x=alt.value(200),  # pixels from left
+#     y=alt.value(322),  # pixels from top
+#     text=alt.value("Miles_per_Gallon")
+# )
 
-# st.button("Clear search")
+# chart = text + chart
+# chart['usermeta'] = {
+#     "embedOptions": {
+#         'loader': {'target': '_blank'}
+#     }
+# }
 
-# st.altair_chart(chart2)
+
+# st.altair_chart(chart, use_container_width=True)
 
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
@@ -93,6 +102,19 @@ def load_data():
             # print(32*np.nanstd(dwarf_all[key]))
             combined_df[key+"_upper"] = np.ones(len(combined_df[key+'_ul']))*1000*np.nanstd(combined_df[key])
             combined_df[key+"_upper"] = combined_df[key+"_upper"].fillna(0)
+        
+        if ("ref" in key):
+            combined_df[key] = combined_df[key].fillna("No reference")
+            # for val in combined_df[key]:
+            #     print(val)
+            #     match = re.search(r'\d+', val)
+            #     if match:
+            #         print(val[match.start():])
+                
+
+            combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: "https://ui.adsabs.harvard.edu/abs/"+ x[re.search(r'\d+', x).start():] if re.search(r'\d+', x) else "N/A")
+
+        combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
         
         # for key in dwarf_all.keys():
@@ -108,6 +130,8 @@ print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len
 # ---------------------dictionary of column labels and descriptions---------------------- #
 #print(dwarf_all['M_V_high'])
 tab_desc = pd.read_csv('table_descriptions.csv', index_col='property', keep_default_na=False)
+tab_desc['reference'] = tab_desc['reference'].replace('N/A', '')
+print(tab_desc['reference'])
 #print(tab_desc.iloc[0].unit)
 tab_desc = tab_desc.T.to_dict(index='property')
 # print(tab_desc.keys())
@@ -127,9 +151,9 @@ valid_plot_cols = ['key', 'ra', 'dec', 'name', 'host', 'confirmed_real',
 # ---------------------misc. functions---------------------- #
 # ------ M_V <-> L_V ------ #
 @st.cache_data
-def lum(x):
-    m_x_sun=4.83
-    return -.4*(x - m_x_sun) + np.log10(2.)
+## M_V -> L_V
+def lum(m_x, m_x_sun=4.83):
+    return pow(10., -0.4*(m_x - m_x_sun) )
 
 @st.cache_data
 def lum_inverse(x):
@@ -166,7 +190,12 @@ def get_axis_specs(axis, key):
     else:
         show_error = False
 
-    return type_axis, reverse_axis, axis_label, channel, show_error
+    if tab_desc[axis]['reference'] != "":
+        ref = tab_desc[axis]['reference']
+    else:
+        ref = 'confirmed_real'
+
+    return type_axis, reverse_axis, axis_label, channel, show_error, ref
 
 # ---------------------sidebar---------------------- #
 
@@ -193,11 +222,11 @@ with st.sidebar:
     with st.container(border=True, key='xcont') as xcont:
         plot_xaxis = st.selectbox('x-axis', valid_plot_cols, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
         #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
-        type_x, reverse_x, xlabel, channel_x, show_xerr = get_axis_specs(plot_xaxis, 'xaxis')
+        type_x, reverse_x, xlabel, channel_x, show_xerr, xref = get_axis_specs(plot_xaxis, 'xaxis')
     with st.container(border=True, key='ycont') as ycont:
         plot_yaxis = st.selectbox('y-axis', valid_plot_cols, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
-        type_y, reverse_y, ylabel, channel_y, show_yerr = get_axis_specs(plot_yaxis, 'yaxis')
+        type_y, reverse_y, ylabel, channel_y, show_yerr, yref = get_axis_specs(plot_yaxis, 'yaxis')
 # st.selectbox(
 #     "Make a selection",
 #     ["Default", "Apple", "Banana", "Carrot"],
@@ -360,12 +389,15 @@ errors_to_layer = []
 # )
 # search_matches = alt.expr.test(alt.expr.regexp(search_input, "i"), alt.datum.name)
 when_hover = alt.when(hover_selection, empty=False)
+selection_click = alt.selection_point(empty=False, on='click', nearest=False)
 
 if len(selected_gals)!=0:
     opacity = alt.when(
         alt.FieldOneOfPredicate(field='name', oneOf=selected_gals)).then(alt.value(1)).otherwise(alt.value(0.1))
 else:
     opacity = alt.value(1)
+
+
 base_chart = alt.Chart(master_df).mark_point(filled=True, size=50).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
@@ -376,16 +408,191 @@ base_chart = alt.Chart(master_df).mark_point(filled=True, size=50).encode(
      #size=sizeCondition,
      strokeWidth=strokeWidthCondition,
      stroke=alt.value('black'),
+     #order=alt.value(0),
+     #href=alt.when(alt.FieldOneOfPredicate(field=xref, oneOf=[0,1])).then(alt.Href("www.google.com:N")).otherwise(xref),
      #size=alt.when(selection).then(alt.value(100)).otherwise(alt.value(0)),
      shape=alt.Shape('source_pretty', scale=alt.Scale(scheme=color_scale, domain=table_names_pretty), legend=alt.Legend(title='System Type')),
      #order=alt.Order('source_pretty'),
-     ).add_params(hover_selection, selection_x, selection_y)#.transform_filter(selection)
+     ).add_params(selection_click, hover_selection, selection_x, selection_y)#.transform_filter(selection)
+
+if plot_xaxis == 'M_V' and plot_yaxis == 'metallicity':
+    x = np.arange( -20,4, .1)
+    mass_met_data = pd.DataFrame({
+        "x":x,
+        'f(x)':-1.68 + 0.29 * np.log10(lum(x)/1e6)
+    })
+
+    mass_met = alt.Chart(mass_met_data).mark_line().encode(
+        x='x',
+        y='f(x)',
+        color=alt.value("##FFAA00"),
+        text=alt.value('Mass-Met'),
+        tooltip=alt.value('Relation from Simon 2019'),
+
+        
+    )
+
+
+    charts_to_layer.append(mass_met)
+
+
+
+
+# def const_mu(muV, rhalf):
+#      return muV - 36.57 - 2.5 * np.log10(2.*np.pi*rhalf**2)
+
+if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
+    x = np.arange(1e0, 1e4, 10)
+    for mu in [24, 26, 28, 30, 32]:
+        const_mu = pd.DataFrame({
+        "x":(x),
+        'f(x)': mu - 36.57 - 2.5 * np.log10(2.*np.pi*(x/1000)**2)
+        })
+        #plt.plot(x,  [const_mu(mu, i/1000.) for i in x], c='k', lw=2, ls=':')
+        const_mu_chart = alt.Chart(const_mu).mark_line().encode(
+            x=alt.X('x',scale=alt.Scale(type=type_x, reverse=reverse_x)),
+            y=alt.Y('f(x)', scale=alt.Scale(type=type_y, reverse=reverse_y)),
+            color=alt.value("black"),
+            text=alt.value(f'Const. $\mu_V$ = {mu}'),
+            tooltip=alt.value(f'Const. $\mu_V$ = {mu}'),
+            
+        )
+        charts_to_layer.append(const_mu_chart)
+
+
 
 #charts_to_layer.append(base_chart)
 
 #help(alt.Chart.configure_point)
 
 #print(plot_yaxis+"_ul")
+
+# text = alt.Chart(master_df).mark_text(
+#     align="left", baseline="top", href='www.google.com',
+# ).encode(
+#     x=alt.value(0.0),
+#     y=alt.value(3),
+#     #x=alt.value(5),  # pixels from left
+#     #y=alt.value(5),  # pixels from top
+#     text=xref,
+   
+#     opacity=alt.condition(selection_click, alt.value(1.0), alt.value(0.0)),
+#     size=alt.value(10),
+#     )
+#charts_to_layer.append(text)
+
+#print(master_df['image'][0])
+# image = alt.Chart(master_df).mark_image(
+#     width=50, height=50).encode(
+#         x=alt.value(0),
+#         y=alt.value(3),
+#         url="img:N", 
+#         size=alt.value(1),
+#         #opacity=alt.condition(selection_click, alt.value(1.0), alt.value(0.0)),
+#         #href='xref'
+#         )
+#charts_to_layer.append(image)
+# source = pd.DataFrame.from_records(
+#     [
+#         {
+#             "x": 0.5,
+#             "y": 0.5,
+#             "img": "https://vega.github.io/vega-datasets/data/ffox.png",
+#         },
+#         {
+#             "x": 1.5,
+#             "y": 1.5,
+#             "img": "https://vega.github.io/vega-datasets/data/gimp.png",
+#         },
+#         {
+#             "x": 2.5,
+#             "y": 2.5,
+#             "img": "https://vega.github.io/vega-datasets/data/7zip.png",
+#         },
+#     ]
+# )
+
+# image = alt.Chart(source).mark_image(width=50, height=50).encode(x=alt.value(0.0), y=alt.value(3), url="img")
+
+#st.altair_chart(text, use_container_width=True)
+
+if show_xerr:
+    xerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+        x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
+        y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        x2=alt.X2(plot_xaxis+"_high", title=""),
+        size=alt.value(500),
+        #stroke=alt.value('black'),
+        #strokeWidth=strokeErrorCondition,
+        color=strokeErrorCondition,
+        # color=alt.Color('source_pretty', scale=alt.Scale(
+        #     domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
+        tooltip=alt.value(None),
+        order=alt.value(1)
+        #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+    ).transform_filter(
+        (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis] != 0)
+    )#.add_params(hover_selection)
+    charts_to_layer.append(xerrorbars)
+
+    if plot_yaxis+"_ul" in master_df.keys():
+        xup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+            x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
+            y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+            x2=alt.X2(plot_xaxis+"_high", title=""),
+            size=alt.value(500),
+            #stroke=alt.value('black'),
+            color=strokeErrorCondition,
+            #color=alt.Color('source_pretty', scale=alt.Scale(
+            #domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
+            tooltip=alt.value(None),
+            order=alt.value(1)
+            #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+        ).transform_filter(
+            (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan')
+        )#.add_params(hover_selection)
+        charts_to_layer.append(xup_errorbars)
+
+if show_yerr:
+    yerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+        x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
+        y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        y2=alt.Y2(plot_yaxis+"_high", title=""),
+        # yError=alt.YError(plot_yaxis + '_low'),
+        # yError2=alt.YError(plot_yaxis + '_high')
+        #stroke=alt.value('black'),
+        #strokeWidth=strokeWidthCondition,
+        size=alt.value(500),
+        color=strokeErrorCondition,
+        # color=alt.Color('source_pretty', scale=alt.Scale(
+        #     domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
+        tooltip=alt.value(None),
+        order=alt.value(1)
+        #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+        ).transform_filter(
+        (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis] != 0)
+        )#.add_params(hover_selection)
+    charts_to_layer.append(yerrorbars)
+
+    if plot_xaxis+"_ul" in master_df.keys():
+        yup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+            x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
+            y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+            y2=alt.Y2(plot_yaxis+"_high", title=""),
+            size=alt.value(500),
+            #stroke=alt.value('black'),
+            #strokeWidth=strokeWidthCondition,
+            color=strokeErrorCondition,
+            # color=alt.Color('source_pretty', scale=alt.Scale(
+            # domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
+            tooltip=alt.value(None),
+            order=alt.value(1)
+            #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
+            ).transform_filter(
+            (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan')
+            )#.add_params(hover_selection)
+        charts_to_layer.append(yup_errorbars)
+
 if plot_yaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
 
@@ -426,94 +633,10 @@ if plot_xaxis+"_ul" in master_df.keys():
     )#.add_params(hover_selection)
     charts_to_layer.append(xul)
 
-if show_xerr:
-    xerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
-        x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
-        y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-        x2=alt.X2(plot_xaxis+"_high", title=""),
-        size=alt.value(500),
-        #stroke=alt.value('black'),
-        #strokeWidth=strokeErrorCondition,
-        color=strokeErrorCondition,
-        # color=alt.Color('source_pretty', scale=alt.Scale(
-        #     domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
-        tooltip=alt.value(None),
-        #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
-    ).transform_filter(
-        (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis] != 0)
-    )#.add_params(hover_selection)
-    charts_to_layer.append(xerrorbars)
-
-    if plot_yaxis+"_ul" in master_df.keys():
-        xup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
-            x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
-            y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-            x2=alt.X2(plot_xaxis+"_high", title=""),
-            size=alt.value(500),
-            #stroke=alt.value('black'),
-            color=strokeErrorCondition,
-            #color=alt.Color('source_pretty', scale=alt.Scale(
-            #domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
-            tooltip=alt.value(None),
-            #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
-        ).transform_filter(
-            (alt.datum[plot_xaxis+"_low"] != 0) & (alt.datum[plot_xaxis+"_high"] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan')
-        )#.add_params(hover_selection)
-        charts_to_layer.append(xup_errorbars)
-
-if show_yerr:
-    yerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
-        x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
-        y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-        y2=alt.Y2(plot_yaxis+"_high", title=""),
-        # yError=alt.YError(plot_yaxis + '_low'),
-        # yError2=alt.YError(plot_yaxis + '_high')
-        #stroke=alt.value('black'),
-        #strokeWidth=strokeWidthCondition,
-        size=alt.value(500),
-        color=strokeErrorCondition,
-        # color=alt.Color('source_pretty', scale=alt.Scale(
-        #     domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
-        tooltip=alt.value(None),
-        #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
-        ).transform_filter(
-        (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis] != 0)
-        )#.add_params(hover_selection)
-    charts_to_layer.append(yerrorbars)
-
-    if plot_xaxis+"_ul" in master_df.keys():
-        yup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
-            x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
-            y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
-            y2=alt.Y2(plot_yaxis+"_high", title=""),
-            size=alt.value(500),
-            #stroke=alt.value('black'),
-            #strokeWidth=strokeWidthCondition,
-            color=strokeErrorCondition,
-            # color=alt.Color('source_pretty', scale=alt.Scale(
-            # domain=table_names_pretty, scheme=color_scale), title='Source', legend=None),
-            tooltip=alt.value(None),
-            #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
-            ).transform_filter(
-            (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan')
-            )#.add_params(hover_selection)
-        charts_to_layer.append(yup_errorbars)
-
-
-
-# filter_chart = base_chart.encode(
-#     opacity=alt.when(
-#         alt.Predicate(alt.FieldOneOfPredicate(field='name', oneOf=selected_gals))).then(alt.value(1)).otherwise(alt.value(0))
-#         )
-        
-
-#charts_to_layer.append(highlight_chart)
-
-
 
 charts_to_layer.append(base_chart)
 #charts_to_layer.append(filter_chart)
-#charts_to_layer.append(filter_chart)
+
 
 # chart2 = alt.Chart(dsph_m31).mark_circle().encode(
 #      x=alt.X(plot_xaxis, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
@@ -527,9 +650,13 @@ print(charts_to_layer)
 
 def plot_dwarf_all():
     #layered = base_chart+xerrorbars
-    layered = alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0))).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
+    layered = (alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0)))).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
+    #print(layered.to_json())
+    #print("@#&@*(#@(#)@)*#@#@")
+    
     #st.altair_chart(alt.layer(*charts_to_layer).add_params(selection_x, selection_y).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0), use_container_width=True)
-    st.altair_chart(layered, use_container_width=True)
+    st.altair_chart(layered, use_container_width=True)#, on_select="rerun")
+    print(layered.to_dict()['params'])
     #st.write(event)
     #return event
 with st.container():

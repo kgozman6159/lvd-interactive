@@ -1,120 +1,120 @@
-﻿property,dtype,label_latex,label,desc,unit
-key,str,Key,Key,unique identifier for each system. The yaml input files have the same name.,N/A
-ra,float64,RA,RA,right ascension ICRS J2000.0,degree
-dec,float64,Dec,Dec,declination ICRS J2000.0 ,degree
-name,str,Name,Name,identifier of system,N/A
-host,str,Host,Host,"host [LVDB key] of system [MW, LMC, M31, etc]",N/A
-confirmed_real,int64,Confirmed Real,Confirmed Real,"system has been confirmed with either deeper photometry, follow-up spectroscopy, proper motion, or other methods (not a chance alignment of stars).",N/A
-confirmed_dwarf,int64,Confirmed Dwarf,Confirmed Dwarf,"system has been confirmed to be dwarf galaxy (or star cluster) based on spectroscopy, and/or deeper photometry.",N/A
-rhalf,float64,$a_h$,aₕ,major axis of the half-light radius (or plummer radius),arcmin
-rhalf_em,float64,,,,N/A
-rhalf_ep,float64,,,,N/A
-position_angle,float64,Position Angle,Position Angle,position angle North of East,degree
-position_angle_em,float64,,,,N/A
-position_angle_ep,float64,,,,N/A
-ellipticity,float64,$\epsilon$,ϵ ,1 - minor/major axis (or 1 - axis ratio).,N/A
-ellipticity_em,float64,,,,N/A
-ellipticity_ep,float64,,,,N/A
-ellipticity_ul,float64,Ellipticity Upper Limit,Ellipticity Upper Limit,,N/A
-ref_structure,str,,,reference for structural parameters,N/A
-distance_modulus,float64,$\mu$,Distance Modulus,distance modulus,mag
-distance_modulus_em,float64,,,,N/A
-distance_modulus_ep,float64,,,,N/A
-ref_distance,str,,,reference for distance,N/A
-apparent_magnitude_v,float64,$m_v$,mᵥ,apparent magnitude in V-band. Corrected for extinction.,N/A
-apparent_magnitude_v_em,float64,,,,N/A
-apparent_magnitude_v_ep,float64,,,,N/A
-ref_m_v,str,,,reference for absolute magnitude,N/A
-vlos_systemic,float64,"$v_{los, systemic}$","vlos,systemic",heliocentric velocity of system,km/s
-vlos_systemic_em,float64,,,,N/A
-vlos_systemic_ep,float64,,,,N/A
-vlos_sigma,float64,$\sigma_{vlos}$,σᵥₗₒₛ,velocity dispersion in line-of-sight,km/s
-vlos_sigma_em,float64,,,,N/A
-vlos_sigma_ep,float64,,,,N/A
-vlos_sigma_ul,float64,,LOS Velocity Dispersion upper limit,,N/A
-ref_vlos,str,,,,N/A
-pmra,float64,$\mu_{\alpha *}$,μ_α,"systemic proper motion in right ascension, includes cos(dec) term following Gaia",mas/yr
-pmra_em,float64,,,,N/A
-pmra_ep,float64,,,,N/A
-pmdec,float64,$\mu_{\delta }$,μ_δ,systemic proper motion in declination direction,mas/yr
-pmdec_em,float64,,,,N/A
-pmdec_ep,float64,,,,N/A
-ref_proper_motion,str,,,reference for proper motion,N/A
-metallicity_spectroscopic,float64,[Fe/H]_{\rm  spec},[Fe/H]_{\rm  spec},spectroscopic metallicity,N/A
-metallicity_spectroscopic_em,float64,,,,N/A
-metallicity_spectroscopic_ep,float64,,,,N/A
-metallicity_spectroscopic_sigma,float64,\sigma_{[Fe\H_{\rm spec}]},\sigma_{[Fe\H_{\rm spec}]},spectroscopic metallicity dispersion,N/A
-metallicity_spectroscopic_sigma_em,float64,,,,N/A
-metallicity_spectroscopic_sigma_ep,float64,,,,N/A
-metallicity_spectroscopic_sigma_ul,float64,,,,N/A
-ref_metallicity_spectroscopic,str,,,reference for spectroscopic metallicity,N/A
-rcore,float64,\rm r_{core},\rm r_{core},profile fits with king profile,arcmin
-rcore_em,float64,,,,N/A
-rcore_ep,float64,,,,N/A
-rking,float64,\rm r_{king},\rm r_{king},profile fits with king profile,arcmin
-rking_em,float64,,,,N/A
-rking_ep,float64,,,,N/A
-ref_structure_king,str,,,,N/A
-rad_sersic,float64,r_{Sérsic},r_{Sérsic},Sérsic radius,arcmin
-rad_sersic_em,float64,,,,N/A
-rad_sersic_ep,float64,,,,N/A
-n_sersic,float64,n_{Sérsic},n_{Sérsic},Sérsic index,N/A
-n_sersic_em,float64,,,,N/A
-n_sersic_ep,float64,,,,N/A
-ref_structure_sersic,str,,,,N/A
-age,float64,Age,Age,age of system,Gyr
-age_em,float64,,,,N/A
-age_ep,float64,,,,N/A
-ref_age,str,,,,N/A
-metallicity_isochrone,float64,[Fe/H]_{\rm  iso},[Fe/H]_{\rm  iso},metallicity from isochrone or cmd fitting,N/A
-metallicity_isochrone_em,float64,,,,N/A
-metallicity_isochrone_ep,float64,,,,N/A
-ref_metallicity_isochrone,str,,,,N/A
-flux_HI,float64,f_{HI},f_{HI},lux in HI,Jy km/s
-flux_HI_em,float64,,,,N/A
-flux_HI_ep,float64,,,,N/A
-flux_HI_ul,float64,,,,N/A
-ref_flux_HI,str,,,,N/A
-metallicity_photometric,float64,,Photometric Metallicity,photometric metallicity,N/A
-metallicity_photometric_em,float64,,,,N/A
-metallicity_photometric_ep,float64,,,,N/A
-metallicity_photometric_sigma,float64,,Photometric Metallicity Dispersion,photometric metallicity dispersion,N/A
-metallicity_photometric_sigma_em,float64,,,,N/A
-metallicity_photometric_sigma_ep,float64,,,,N/A
-metallicity_photometric_sigma_ul,float64,,,,N/A
-ref_metallicity_photometric,str,,,,N/A
-M_V,float64,Mv,Mv,"absolute V-band magnitude, computed from distance modulus and V-band apparent magnitude",N/A
-M_V_em,float64,,,,N/A
-M_V_ep,float64,,,,N/A
-mass_stellar,float64,M_\odot,Stellar Mass,log10 stellar mass assuming M/L=2 and computed from M_V,log10 Msun
-distance,float64,D_{\odot},D_⊙,"heliocentric distance, computed from distance modulus",kpc
-distance_em,float64,,,,N/A
-distance_ep,float64,,,,N/A
-ll,float64,l,l,Galactic longitude,degree
-bb,float64,b,b,Galactic latitude,degree
-sg_xx,float64,SXY,SXY,"Supergalactic coordinates, x",kpc
-sg_yy,float64,SGY,SGY,"Supergalactic coordinates, y",kpc
-sg_zz,float64,SGZ,SGZ,"Supergalactic coordinates, z",kpc
-distance_gc,float64,D_{GC},D_{GC},3D distance to Galactic center,kpc
-distance_m31,float64,D_{M31},D_{M31},3D distance to M31 center,kpc
-distance_lg,float64,D_{LG},D_{LG},3D distance to Local Group center,kpc
-distance_host,float64,D_{Host},D_{Host},3D distance to host galaxy,kpc
-mass_HI,float64,M_{HI},M_{HI},log10 HI mass computed from HI flux and distance,log10 Msun
-mass_HI_ul,float64,,,,N/A
-metallicity,float64,[Fe/H],[Fe/H],"union of spectroscopic, photometric, and isochrone, spectroscopic preferred over photometric metallicity, and photometric over isochrone",N/A
-metallicity_em,float64,,,,N/A
-metallicity_ep,float64,,,,N/A
-metallicity_type,str,,Metallicity Type,"lists whether metallicity column is photometric, isochrone or spectroscopic.",N/A
-velocity_gsr,float64,,Velocity rel. to Galactic standard,Velocity in Galactic standard of rest frame,km/s
-velocity_lg,float64,,Velocity rel. to LG,Velocity of system relative to the Local Group centroid,km/s
-mass_dynamical_wolf,float64,M_{dyn},Dynamical Mass (Wolf),Dynamical mass within 3D half-light radius using the dynamical mass estimator in Wolf et al. 2010,log10 Msun
-mass_dynamical_wolf_em,float64,,,,N/A
-mass_dynamical_wolf_ep,float64,,,,N/A
-mass_dynamical_wolf_ul,float64,,,,N/A
-rhalf_physical,float64,r_h,rₕ,half-light radius in physical units – rhalf * distance,pc
-rhalf_physical_em,float64,,,,N/A
-rhalf_physical_ep,float64,,,,N/A
-rhalf_sph_physical,float64,r_{1/2},r½,azimuthally-averaged half-light radius (geometric mean); rhalf * distance * sqrt(1-ellipticity),pc
-rhalf_sph_physical_em,float64,,,,N/A
-rhalf_sph_physical_ep,float64,,,,N/A
-surface_brightness_rhalf,float64,<\mu>,μ_r½,average surface brightness within azimuthally-averaged half-light radius,mag/arcsec^2
+﻿property,dtype,label_latex,label,desc,unit,reference
+key,str,Key,Key,unique identifier for each system. The yaml input files have the same name.,N/A,N/A
+ra,float64,RA,RA,right ascension ICRS J2000.0,degree,N/A
+dec,float64,Dec,Dec,declination ICRS J2000.0 ,degree,N/A
+name,str,Name,Name,identifier of system,N/A,N/A
+host,str,Host,Host,"host [LVDB key] of system [MW, LMC, M31, etc]",N/A,N/A
+confirmed_real,int64,Confirmed Real,Confirmed Real,"system has been confirmed with either deeper photometry, follow-up spectroscopy, proper motion, or other methods (not a chance alignment of stars).",N/A,N/A
+confirmed_dwarf,int64,Confirmed Dwarf,Confirmed Dwarf,"system has been confirmed to be dwarf galaxy (or star cluster) based on spectroscopy, and/or deeper photometry.",N/A,N/A
+rhalf,float64,$a_h$,aₕ,major axis of the half-light radius (or plummer radius),arcmin,bibcode_ref_structure
+rhalf_em,float64,,,,N/A,bibcode_ref_structure
+rhalf_ep,float64,,,,N/A,bibcode_ref_structure
+position_angle,float64,Position Angle,Position Angle,position angle North of East,degree,bibcode_ref_structure
+position_angle_em,float64,,,,N/A,bibcode_ref_structure
+position_angle_ep,float64,,,,N/A,bibcode_ref_structure
+ellipticity,float64,$\epsilon$,ϵ ,1 - minor/major axis (or 1 - axis ratio).,N/A,bibcode_ref_structure
+ellipticity_em,float64,,,,N/A,bibcode_ref_structure
+ellipticity_ep,float64,,,,N/A,bibcode_ref_structure
+ellipticity_ul,float64,Ellipticity Upper Limit,Ellipticity Upper Limit,,N/A,bibcode_ref_structure
+ref_structure,str,,,reference for structural parameters,N/A,N/A
+distance_modulus,float64,$\mu$,Distance Modulus,distance modulus,mag,bibcode_ref_distance
+distance_modulus_em,float64,,,,N/A,bibcode_ref_distance
+distance_modulus_ep,float64,,,,N/A,bibcode_ref_distance
+ref_distance,str,,,reference for distance,N/A,N/A
+apparent_magnitude_v,float64,$m_v$,mᵥ,apparent magnitude in V-band. Corrected for extinction.,N/A,bibcode_ref_m_v
+apparent_magnitude_v_em,float64,,,,N/A,bibcode_ref_m_v
+apparent_magnitude_v_ep,float64,,,,N/A,bibcode_ref_m_v
+ref_m_v,str,,,reference for absolute magnitude,N/A,N/A
+vlos_systemic,float64,"$v_{los, systemic}$","vlos,systemic",heliocentric velocity of system,km/s,bibcode_ref_vlos
+vlos_systemic_em,float64,,,,N/A,bibcode_ref_vlos
+vlos_systemic_ep,float64,,,,N/A,bibcode_ref_vlos
+vlos_sigma,float64,$\sigma_{vlos}$,σᵥₗₒₛ,velocity dispersion in line-of-sight,km/s,bibcode_ref_vlos
+vlos_sigma_em,float64,,,,N/A,bibcode_ref_vlos
+vlos_sigma_ep,float64,,,,N/A,bibcode_ref_vlos
+vlos_sigma_ul,float64,,LOS Velocity Dispersion upper limit,,N/A,bibcode_ref_vlos
+ref_vlos,str,,,reference for line of sight velocity,N/A,N/A
+pmra,float64,$\mu_{\alpha *}$,μ_α,"systemic proper motion in right ascension, includes cos(dec) term following Gaia",mas/yr,bibcode_ref_proper_motion
+pmra_em,float64,,,,N/A,bibcode_ref_proper_motion
+pmra_ep,float64,,,,N/A,bibcode_ref_proper_motion
+pmdec,float64,$\mu_{\delta }$,μ_δ,systemic proper motion in declination direction,mas/yr,bibcode_ref_proper_motion
+pmdec_em,float64,,,,N/A,bibcode_ref_proper_motion
+pmdec_ep,float64,,,,N/A,bibcode_ref_proper_motion
+ref_proper_motion,str,,,reference for proper motion,N/A,N/A
+metallicity_spectroscopic,float64,[Fe/H]_{\rm  spec},[Fe/H]_{\rm  spec},spectroscopic metallicity,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic_em,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic_ep,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic_sigma,float64,\sigma_{[Fe\H_{\rm spec}]},\sigma_{[Fe\H_{\rm spec}]},spectroscopic metallicity dispersion,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic_sigma_em,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic_sigma_ep,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic_sigma_ul,float64,,upper lim sigma Fe/H,,N/A,bibcode_ref_metallicity_spectroscopic
+ref_metallicity_spectroscopic,str,,,reference for spectroscopic metallicity,N/A,N/A
+rcore,float64,\rm r_{core},\rm r_{core},profile fits with king profile,arcmin,bibcode_ref_structure_king
+rcore_em,float64,,,,N/A,bibcode_ref_structure_king
+rcore_ep,float64,,,,N/A,bibcode_ref_structure_king
+rking,float64,\rm r_{king},\rm r_{king},profile fits with king profile,arcmin,bibcode_ref_structure_king
+rking_em,float64,,,,N/A,bibcode_ref_structure_king
+rking_ep,float64,,,,N/A,bibcode_ref_structure_king
+ref_structure_king,str,,,,N/A,N/A
+rad_sersic,float64,r_{Sérsic},r_{Sérsic},Sérsic radius,arcmin,bibcode_ref_structure_sersic
+rad_sersic_em,float64,,,,N/A,bibcode_ref_structure_sersic
+rad_sersic_ep,float64,,,,N/A,bibcode_ref_structure_sersic
+n_sersic,float64,n_{Sérsic},n_{Sérsic},Sérsic index,N/A,bibcode_ref_structure_sersic
+n_sersic_em,float64,,,,N/A,bibcode_ref_structure_sersic
+n_sersic_ep,float64,,,,N/A,bibcode_ref_structure_sersic
+ref_structure_sersic,str,,,,N/A,N/A
+age,float64,Age,Age,age of system,Gyr,bibcode_ref_age
+age_em,float64,,,,N/A,bibcode_ref_age
+age_ep,float64,,,,N/A,bibcode_ref_age
+ref_age,str,,,,N/A,N/A
+metallicity_isochrone,float64,[Fe/H]_{\rm  iso},[Fe/H]_{\rm  iso},metallicity from isochrone or cmd fitting,N/A,bibcode_ref_metallicity_isochrone
+metallicity_isochrone_em,float64,,,,N/A,bibcode_ref_metallicity_isochrone
+metallicity_isochrone_ep,float64,,,,N/A,bibcode_ref_metallicity_isochrone
+ref_metallicity_isochrone,str,,,,N/A,N/A
+flux_HI,float64,f_{HI},f_{HI},lux in HI,Jy km/s,bibcode_ref_flux_HI
+flux_HI_em,float64,,,,N/A,bibcode_ref_flux_HI
+flux_HI_ep,float64,,,,N/A,bibcode_ref_flux_HI
+flux_HI_ul,float64,,,,N/A,bibcode_ref_flux_HI
+ref_flux_HI,str,,,,N/A,N/A
+metallicity_photometric,float64,,Photometric Metallicity,photometric metallicity,N/A,bibcode_ref_metallicity_photometric
+metallicity_photometric_em,float64,,,,N/A,bibcode_ref_metallicity_photometric
+metallicity_photometric_ep,float64,,,,N/A,bibcode_ref_metallicity_photometric
+metallicity_photometric_sigma,float64,,Photometric Metallicity Dispersion,photometric metallicity dispersion,N/A,bibcode_ref_metallicity_photometric
+metallicity_photometric_sigma_em,float64,,,,N/A,bibcode_ref_metallicity_photometric
+metallicity_photometric_sigma_ep,float64,,,,N/A,bibcode_ref_metallicity_photometric
+metallicity_photometric_sigma_ul,float64,,,,N/A,bibcode_ref_metallicity_photometric
+ref_metallicity_photometric,str,,,,N/A,N/A
+M_V,float64,Mv,Mv,"absolute V-band magnitude, computed from distance modulus and V-band apparent magnitude",N/A,N/A
+M_V_em,float64,,,,N/A,N/A
+M_V_ep,float64,,,,N/A,N/A
+mass_stellar,float64,M_\odot,Stellar Mass,log10 stellar mass assuming M/L=2 and computed from M_V,log10 Msun,N/A
+distance,float64,D_{\odot},D_⊙,"heliocentric distance, computed from distance modulus",kpc,N/A
+distance_em,float64,,,,N/A,N/A
+distance_ep,float64,,,,N/A,N/A
+ll,float64,l,l,Galactic longitude,degree,N/A
+bb,float64,b,b,Galactic latitude,degree,N/A
+sg_xx,float64,SXY,SXY,"Supergalactic coordinates, x",kpc,N/A
+sg_yy,float64,SGY,SGY,"Supergalactic coordinates, y",kpc,N/A
+sg_zz,float64,SGZ,SGZ,"Supergalactic coordinates, z",kpc,N/A
+distance_gc,float64,D_{GC},D_{GC},3D distance to Galactic center,kpc,N/A
+distance_m31,float64,D_{M31},D_{M31},3D distance to M31 center,kpc,N/A
+distance_lg,float64,D_{LG},D_{LG},3D distance to Local Group center,kpc,N/A
+distance_host,float64,D_{Host},D_{Host},3D distance to host galaxy,kpc,N/A
+mass_HI,float64,M_{HI},M_{HI},log10 HI mass computed from HI flux and distance,log10 Msun,N/A
+mass_HI_ul,float64,,,,N/A,N/A
+metallicity,float64,[Fe/H],[Fe/H],"union of spectroscopic, photometric, and isochrone, spectroscopic preferred over photometric metallicity, and photometric over isochrone",N/A,N/A
+metallicity_em,float64,,,,N/A,N/A
+metallicity_ep,float64,,,,N/A,N/A
+metallicity_type,str,,Metallicity Type,"lists whether metallicity column is photometric, isochrone or spectroscopic.",N/A,N/A
+velocity_gsr,float64,,Velocity rel. to Galactic standard,Velocity in Galactic standard of rest frame,km/s,N/A
+velocity_lg,float64,,Velocity rel. to LG,Velocity of system relative to the Local Group centroid,km/s,N/A
+mass_dynamical_wolf,float64,M_{dyn},Dynamical Mass (Wolf),Dynamical mass within 3D half-light radius using the dynamical mass estimator in Wolf et al. 2010,log10 Msun,N/A
+mass_dynamical_wolf_em,float64,,,,N/A,N/A
+mass_dynamical_wolf_ep,float64,,,,N/A,N/A
+mass_dynamical_wolf_ul,float64,,,,N/A,N/A
+rhalf_physical,float64,r_h,rₕ,half-light radius in physical units – rhalf * distance,pc,N/A
+rhalf_physical_em,float64,,,,N/A,N/A
+rhalf_physical_ep,float64,,,,N/A,N/A
+rhalf_sph_physical,float64,r_{1/2},r½,azimuthally-averaged half-light radius (geometric mean); rhalf * distance * sqrt(1-ellipticity),pc,N/A
+rhalf_sph_physical_em,float64,,,,N/A,N/A
+rhalf_sph_physical_ep,float64,,,,N/A,N/A
+surface_brightness_rhalf,float64,<\mu>,μ_r½,average surface brightness within azimuthally-averaged half-light radius,mag/arcsec^2,N/A
