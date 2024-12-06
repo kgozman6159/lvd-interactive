@@ -18,7 +18,12 @@ from collections import OrderedDict
 st.set_page_config(layout="wide",
     page_title="Local Volume Database",
     page_icon="🌌",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+    'Report a bug': "https://github.com/kgozman6159/lvd-interactive/issues",
+    'About': "Made with :heart: by Katya Gozman using Streamlit :streamlit:, python, Altair, and Pandas. Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)!"
+  }
+
 )
 
 import altair as alt
@@ -156,7 +161,7 @@ st.markdown(
 <style>
 div[data-testid="stDialog"] div[role="dialog"] {
     width: 80vw;
-    height: 80vh;
+    
 }
 </style>
 """,
@@ -168,7 +173,12 @@ css="""
 <style>
     [data-testid="stDialog"] div[role="dialog"]{
         background: white;
-        opacity: 0.9;
+        /*background-image: url(https://cdn.esahubble.org/archives/images/newsfeature/heic1909a.jpg);
+        background-size: contain;
+        background-repeat: no-repeat;*/
+        # background-image: radial-gradient(circle, white,white,white,white,grey);
+        opacity: 1;
+        text-color: white;
 
     }
 </style>
@@ -177,19 +187,53 @@ st.write(css, unsafe_allow_html=True)
 
 @st.dialog("Welcome to the interactive Local Volume Database!", width='large')
 def tutorial():
-    st.markdown("""
+    string = """
+    This website lets you plot different properties of dwarf galaxies and globular clusters in the Local Volume. 
+    These properties are collated in the Local Volume Database, which is maintained by Andrew Pace."""
+
+    st.header(string)
+    
+    col1, col2 = st.columns([1,1])
+    with col1:
+        st.markdown("""
+        #### ⬅️ You can use the sidebar to adjust the plotting parameters.
+        - :red-background[**x-axis, y-axis**] Select the property to plot on the x- and y-axes.
+          - Hover over the :material/help: icon next to each property to see an explanation of what it is.
+          - Some selected parameters will also let you display error bars for those quantities and/or change the scale of the axis from linear to logarithmic.
+          - Arrow markers in the plot indicate that the value is an upper limit.
+        - :red-background[**Source**] Filter the data by what type of systems you want to display.
+        - :red-background[**Tooltip**] Select the properties to display in the tooltip. If they are not in the data, they will be displayed as "null".
+        - :red-background[**Color selection**] Change the color of each source in the plot.
+                      
+                    """)
+    with col2:
+        st.markdown("""
                 
-    This website lets you plot different properties of dwarf galaxies and globular clusters in the Local Volume.
-    :red[Streamlit] :orange[can] :green[write] :blue[text] :rainbow[in] :blue-background[highlight] text.
-    ⬅️ You can use the sidebar to filter the data and select which properties to plot.
-    Hover over the points to see more information about each object.
-    Click on the legend to highlight objects from a specific source.
+    #### :bar_chart: The main plot in the middle shows the properties of the objects in the database. 
+                
+    :three_button_mouse: Click and drag to :blue-background[**pan**] around the plot. 
+                
+    :mag_right: Use your mouse wheel and hold down the 'shift' and 'alt' ('option' on a Mac) keys simultaneously to :blue-background[**zoom**] in and out.
+                You can also zoom only in the x or y directions by using the mouse wheel and holding down the 'alt' or 'shift' keys, respectively.
+                    Note that zooming is only possible for quantitative axes.
 
-    The database is based on the following sources:
-    - [MW Dwarfs](https://ui.adsabs.harvard.edu/abs/2019ApJ...872..152D/abstract)
+    :flying_saucer: :blue-background[**Hover**] over the points to see more information about each object. You can change the information displayed in the tooltip in the sidebar.
+                    
+     :pushpin: In the menu above the plot, use the dropdown to :blue-background[**select**] as many systems as you want by name to highlight in the plot. 
+                    You can also type to search for a specific system. If the system does not have a value for the selected x and y axes,
+                    it will not show up in the list.
+                
 
-    wwewe
     """)
+        
+    st.markdown("""
+                Click on the :material/more_vert: icon in the top right of the sidebar to expand it and see more options.
+                """)
+        
+    st.caption("""
+    ### :bulb: If you ever want to read this information again, click on the "show tutorial" button in the sidebar. Thanks for visiting! :blush:
+    """)
+
     
 
 if "show_tutorial" not in st.session_state:
@@ -213,7 +257,7 @@ if st.sidebar.button("Show Tutorial", on_click=lambda: st.session_state.update(s
 #     'Hello there!'
 #     clicked = st.button('Click me!')
 
-st.title("Welcome to the interactive Local Volume Database!")
+#st.title("Welcome to the interactive Local Volume Database!")
 
 
     
@@ -334,7 +378,7 @@ with st.sidebar:
 
 # ---------------------filtering---------------------- #
 #filter by source
-source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty)
+source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
 if source:
     master_df = master_df[master_df['source_pretty'].isin(source)]
 
@@ -844,17 +888,19 @@ def plot_dwarf_all():
 with st.container():
     plot_dwarf_all()
     
+st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)!")
 
 #st.altair_chart(charts_to_layer[1], use_container_width=True)
 
 
 #badge(type="github", name="apace7/local_volume_database/")
 # Add Link to your repo
-'''
-    Check out the data! [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database/) 
+# '''
+#     Check out the data! [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database/) 
 
-'''
-st.markdown("<br>",unsafe_allow_html=True)
+# '''
+#st.markdown("Check out the data! [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database/) ",unsafe_allow_html=True)
+
 
 # st.text('all dwarfs')
 # st.dataframe(master_df, use_container_width=True) # use_container_width doesn't work??
