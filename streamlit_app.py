@@ -152,7 +152,7 @@ print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len
 #st.dataframe(master_df, use_container_width=True)
 
 theme = st_theme()
-print(theme)
+#print(theme)
 #---------------------title and instructions----------------------#
 
 
@@ -169,21 +169,21 @@ div[data-testid="stDialog"] div[role="dialog"] {
 )
 
 
-css="""
-<style>
-    [data-testid="stDialog"] div[role="dialog"]{
-        background: white;
-        /*background-image: url(https://cdn.esahubble.org/archives/images/newsfeature/heic1909a.jpg);
-        background-size: contain;
-        background-repeat: no-repeat;*/
-        # background-image: radial-gradient(circle, white,white,white,white,grey);
-        opacity: 1;
-        text-color: white;
+# css="""
+# <style>
+#     [data-testid="stDialog"] div[role="dialog"]{
+#         background: white;
+#         /*background-image: url(https://cdn.esahubble.org/archives/images/newsfeature/heic1909a.jpg);
+#         background-size: contain;
+#         background-repeat: no-repeat;*/
+#         # background-image: radial-gradient(circle, white,white,white,white,grey);
+#         opacity: 1;
+#         /*text-color: white;*/
 
-    }
-</style>
-"""
-st.write(css, unsafe_allow_html=True)
+#     }
+# </style>
+# """
+# st.write(css, unsafe_allow_html=True)
 
 @st.dialog("Welcome to the interactive Local Volume Database!", width='large')
 def tutorial():
@@ -202,6 +202,7 @@ def tutorial():
           - Some selected parameters will also let you display error bars for those quantities and/or change the scale of the axis from linear to logarithmic.
           - Arrow markers in the plot indicate that the value is an upper limit.
         - :red-background[**Source**] Filter the data by what type of systems you want to display.
+        - :red-background[**Filters**] Filter the data by specific properties.
         - :red-background[**Tooltip**] Select the properties to display in the tooltip. If they are not in the data, they will be displayed as "null".
         - :red-background[**Color selection**] Change the color of each source in the plot.
                       
@@ -215,7 +216,7 @@ def tutorial():
                 
     :mag_right: Use your mouse wheel and hold down the 'shift' and 'alt' ('option' on a Mac) keys simultaneously to :blue-background[**zoom**] in and out.
                 You can also zoom only in the x or y directions by using the mouse wheel and holding down the 'alt' or 'shift' keys, respectively.
-                    Note that zooming is only possible for quantitative axes.
+                    Note that zooming is only possible for quantitative axes. Double click anywhere on the plot to reset the zoom.
 
     :flying_saucer: :blue-background[**Hover**] over the points to see more information about each object. You can change the information displayed in the tooltip in the sidebar.
                     
@@ -227,7 +228,7 @@ def tutorial():
     """)
         
     st.markdown("""
-                Click on the :material/more_vert: icon in the top right of the sidebar to expand it and see more options.
+                Click on the :material/more_vert: icon in the top right of the sidebar to change appearance settings and report bugs
                 """)
         
     st.caption("""
@@ -381,22 +382,55 @@ with st.sidebar:
 source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
 if source:
     master_df = master_df[master_df['source_pretty'].isin(source)]
+print(source)
 
-
-#---------------------user select what values to show in tooltip----------------------#
-
+# ---------------------filtering by columns---------------------- #
 with st.sidebar:
-    def tooltip_items():
-        tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'], on_change=lambda: st.session_state.update(show_tutorial=False))
-        # if tooltip_select:
-        #     st.toast(f"Selected {len(tooltip_select)} properties to display in the tooltip")
-        #tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
-        return tooltip_select
-# print([tab_desc[x]['desc'] for x in tooltip_select])
-#tooltip = tooltip_items()
-    tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_items()]
+    with st.expander("Filtering"):
+        st.markdown("### Filters")
+        filter_container = st.container()
+        filter_container.markdown("Add filters for different parameters:")
+        filter_columns = st.multiselect('Select parameters to filter by', valid_plot_cols, format_func=lambda x: tab_desc[x]['label'], key="filter_columns", on_change=lambda: st.session_state.update(show_tutorial=False))
 
-    #st.write(tooltip)
+        
+        filter_values = {}
+        for col in filter_columns:
+            if tab_desc[col]['dtype'] == 'float64' or tab_desc[col]['dtype'] == 'int64':
+                min_val, max_val = master_df[col].min(), master_df[col].max()
+                filter_values[col] = filter_container.slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', min_val, max_val, (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
+            else:
+                unique_vals = master_df[col].unique()
+                filter_values[col] = filter_container.multiselect(f'{tab_desc[col]["label"]}', unique_vals, default=unique_vals, on_change=lambda: st.session_state.update(show_tutorial=False))
+        #st.form_submit_button('Apply Filters', on_click=lambda: st.session_state.update(show_tutorial=False))
+
+
+        for col, val in filter_values.items():
+            if isinstance(val, tuple):
+                master_df = master_df[(master_df[col] >= val[0]) & (master_df[col] <= val[1])]
+            else:
+                master_df = master_df[master_df[col].isin(val)]
+
+# # filter by confirmed dwarf
+# confirmed_dwarf = st.sidebar.multiselect('Confirmed Dwarf', dwarf_all['confirmed_dwarf'].unique())
+# if confirmed_dwarf:
+#     dwarf_all = dwarf_all[dwarf_all['confirmed_dwarf'].isin(confirmed_dwarf)]
+# # filter by confirmed real
+# confirmed_real = st.sidebar.multiselect('Confirmed Real', dwarf_all['confirmed_real'].unique())
+# if confirmed_real:
+#     dwarf_all = dwarf_all[dwarf_all['confirmed_real'].isin(confirmed_real)]
+# # filter by distance
+# distance = st.sidebar.slider('Distance (kpc)', dwarf_all['distance'].min(), dwarf_all['distance'].max(), (dwarf_all['distance'].min(), dwarf_all['distance'].max()))
+# dwarf_all = dwarf_all[(dwarf_all['distance'] >= distance[0]) & (dwarf_all['distance'] <= distance[1])]
+# # filter by apparent magnitude
+# apparent_magnitude_v = st.sidebar.slider('Apparent Magnitude V', dwarf_all['apparent_magnitude_v'].min(), dwarf_all['apparent_magnitude_v'].max(), (dwarf_all['apparent_magnitude_v'].min(), dwarf_all['apparent_magnitude_v'].max()))
+# dwarf_all = dwarf_all[(dwarf_all['apparent_magnitude_v'] >= apparent_magnitude_v[0]) & (dwarf_all['apparent_magnitude_v'] <= apparent_magnitude_v[1])]
+# # filter by vlos systemic
+# vlos_systemic = st.sidebar.slider('Vlos Systemic', dwarf_all['vlos_systemic'].min(), dwarf_all['vlos_systemic'].max(), (dwarf_all['vlos_systemic'].min(), dwarf_all['vlos_systemic'].max()))
+# dwarf_all = dwarf_all[(dwarf_all['vlos_systemic'] >= vlos_systemic[0]) & (dwarf_all['vlos_systemic'] <= vlos_systemic[1])]
+
+
+
+
 #---------------------user select color for each source----------------------#
 
 def get_luminance(hex_color):
@@ -435,6 +469,19 @@ for i in range(len(hex_codes)):
     """%(table_names_pretty[i], range_[i], col)
 st.markdown(string, unsafe_allow_html=True)
 
+#---------------------user select what values to show in tooltip----------------------#
+
+with st.sidebar:
+    def tooltip_items():
+        tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'], on_change=lambda: st.session_state.update(show_tutorial=False))
+        # if tooltip_select:
+        #     st.toast(f"Selected {len(tooltip_select)} properties to display in the tooltip")
+        #tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
+        return tooltip_select
+# print([tab_desc[x]['desc'] for x in tooltip_select])
+#tooltip = tooltip_items()
+    tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_items()]
+
 #---------------------user select and highlight a certain galaxy by name using st.multiselect----------------------#
 
 def gal_search():
@@ -446,7 +493,6 @@ def gal_search():
 selected_gals = gal_search()
 
 filtered_df = master_df[master_df['name'].isin(selected_gals)]
-st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
     # print(highlight)
     # print(master_df['name'].unique())
 
@@ -487,25 +533,6 @@ st.markdown(string, unsafe_allow_html=True)
 #         }
 #     </style>
 #     """%(hex_codes[0], hex_codes[1], hex_codes[2]), unsafe_allow_html=True)
-
-
-# # filter by confirmed dwarf
-# confirmed_dwarf = st.sidebar.multiselect('Confirmed Dwarf', dwarf_all['confirmed_dwarf'].unique())
-# if confirmed_dwarf:
-#     dwarf_all = dwarf_all[dwarf_all['confirmed_dwarf'].isin(confirmed_dwarf)]
-# # filter by confirmed real
-# confirmed_real = st.sidebar.multiselect('Confirmed Real', dwarf_all['confirmed_real'].unique())
-# if confirmed_real:
-#     dwarf_all = dwarf_all[dwarf_all['confirmed_real'].isin(confirmed_real)]
-# # filter by distance
-# distance = st.sidebar.slider('Distance (kpc)', dwarf_all['distance'].min(), dwarf_all['distance'].max(), (dwarf_all['distance'].min(), dwarf_all['distance'].max()))
-# dwarf_all = dwarf_all[(dwarf_all['distance'] >= distance[0]) & (dwarf_all['distance'] <= distance[1])]
-# # filter by apparent magnitude
-# apparent_magnitude_v = st.sidebar.slider('Apparent Magnitude V', dwarf_all['apparent_magnitude_v'].min(), dwarf_all['apparent_magnitude_v'].max(), (dwarf_all['apparent_magnitude_v'].min(), dwarf_all['apparent_magnitude_v'].max()))
-# dwarf_all = dwarf_all[(dwarf_all['apparent_magnitude_v'] >= apparent_magnitude_v[0]) & (dwarf_all['apparent_magnitude_v'] <= apparent_magnitude_v[1])]
-# # filter by vlos systemic
-# vlos_systemic = st.sidebar.slider('Vlos Systemic', dwarf_all['vlos_systemic'].min(), dwarf_all['vlos_systemic'].max(), (dwarf_all['vlos_systemic'].min(), dwarf_all['vlos_systemic'].max()))
-# dwarf_all = dwarf_all[(dwarf_all['vlos_systemic'] >= vlos_systemic[0]) & (dwarf_all['vlos_systemic'] <= vlos_systemic[1])]
 
 
 #-----create selections and conditions for interactivity-----#
@@ -826,7 +853,7 @@ if plot_yaxis+"_ul" in master_df.keys():
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         #y2=alt.Y2(plot_yaxis+"_upper"),
-        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty), title='Source', legend=None),
+        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, range=range_), title='Source', legend=None),
         tooltip=tooltip,
         angle=alt.value(180),
         stroke=strokeColor,
@@ -847,7 +874,7 @@ if plot_xaxis+"_ul" in master_df.keys():
         x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         size=alt.value(500),
-        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty), title='Source', legend=None),
+        color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, range=range_), title='Source', legend=None),
         tooltip=tooltip,
         angle=alt.value(-90),
         xOffset=alt.value(-10),
@@ -887,6 +914,9 @@ def plot_dwarf_all():
     #return event
 with st.container():
     plot_dwarf_all()
+
+st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
+
     
 st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)!")
 
