@@ -27,6 +27,7 @@ from webcolors import name_to_hex
 
 from streamlit_extras.badges import badge 
 from streamlit_theme import st_theme
+import streamlit.components.v1 as components
 
 #rom vega_datasets import data
 
@@ -147,6 +148,78 @@ print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len
 
 theme = st_theme()
 print(theme)
+#---------------------title and instructions----------------------#
+
+
+st.markdown(
+    """
+<style>
+div[data-testid="stDialog"] div[role="dialog"] {
+    width: 80vw;
+    height: 80vh;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+css="""
+<style>
+    [data-testid="stDialog"] div[role="dialog"]{
+        background: white;
+        opacity: 0.9;
+
+    }
+</style>
+"""
+st.write(css, unsafe_allow_html=True)
+
+@st.dialog("Welcome to the interactive Local Volume Database!", width='large')
+def tutorial():
+    st.markdown("""
+                
+    This website lets you plot different properties of dwarf galaxies and globular clusters in the Local Volume.
+    :red[Streamlit] :orange[can] :green[write] :blue[text] :rainbow[in] :blue-background[highlight] text.
+    ⬅️ You can use the sidebar to filter the data and select which properties to plot.
+    Hover over the points to see more information about each object.
+    Click on the legend to highlight objects from a specific source.
+
+    The database is based on the following sources:
+    - [MW Dwarfs](https://ui.adsabs.harvard.edu/abs/2019ApJ...872..152D/abstract)
+
+    wwewe
+    """)
+    
+
+if "show_tutorial" not in st.session_state:
+    st.session_state.show_tutorial = True
+
+if st.session_state.show_tutorial:
+    tutorial()
+    #st.session_state.show_tutorial = False
+
+if st.sidebar.button("Show Tutorial", on_click=lambda: st.session_state.update(show_tutorial=True)):
+    st.session_state.show_tutorial = True
+
+# if st.session_state.show_tutorial:
+#     tutorial()
+#     st.session_state.show_tutorial = False
+
+
+
+# my_expander = st.expander(label='Click me for help!', expanded=False, icon="❓")
+# with my_expander:
+#     'Hello there!'
+#     clicked = st.button('Click me!')
+
+st.title("Welcome to the interactive Local Volume Database!")
+
+
+    
+
+with st.sidebar:
+    st.title("Parameters")
 # ---------------------dictionary of column labels and descriptions---------------------- #
 #print(dwarf_all['M_V_high'])
 tab_desc = pd.read_csv('table_descriptions.csv', index_col='property', keep_default_na=False)
@@ -240,11 +313,11 @@ st.session_state.my_key1=st.session_state.my_key1
 st.session_state.my_key2=st.session_state.my_key2
 with st.sidebar:
     with st.container(border=True, key='xcont') as xcont:
-        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}")
+        plot_xaxis = st.selectbox('x-axis', valid_plot_cols, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}", on_change=lambda: st.session_state.update(show_tutorial=False))
         #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
         type_x, reverse_x, xlabel, channel_x, show_xerr, xref = get_axis_specs(plot_xaxis, 'xaxis')
     with st.container(border=True, key='ycont') as ycont:
-        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}")
+        plot_yaxis = st.selectbox('y-axis', valid_plot_cols, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}", on_change=lambda: st.session_state.update(show_tutorial=False))
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr, yref = get_axis_specs(plot_yaxis, 'yaxis')
 # st.selectbox(
@@ -255,27 +328,67 @@ with st.sidebar:
 # )
 
 
+
+
+
+
 # ---------------------filtering---------------------- #
 #filter by source
 source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty)
 if source:
     master_df = master_df[master_df['source_pretty'].isin(source)]
 
-hex_codes = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac']
+
+#---------------------user select what values to show in tooltip----------------------#
+
 with st.sidebar:
-    with st.popover("Color selection", use_container_width=False):
+    def tooltip_items():
+        tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'], on_change=lambda: st.session_state.update(show_tutorial=False))
+        # if tooltip_select:
+        #     st.toast(f"Selected {len(tooltip_select)} properties to display in the tooltip")
+        #tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
+        return tooltip_select
+# print([tab_desc[x]['desc'] for x in tooltip_select])
+#tooltip = tooltip_items()
+    tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_items()]
+
+    #st.write(tooltip)
+#---------------------user select color for each source----------------------#
+
+def get_luminance(hex_color):
+    color = hex_color[1:]
+
+    hex_red = int(color[0:2], base=16)
+    hex_green = int(color[2:4], base=16)
+    hex_blue = int(color[4:6], base=16)
+    return hex_red * 0.2126 + hex_green * 0.7152 + hex_blue * 0.0722
+
+hex_codes = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#FFC000', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac']
+with st.sidebar:
+    with st.popover("Color selection", use_container_width=False, help='Change the color of each source in the plot'):
         cols = st.columns(2, vertical_alignment="top", gap='medium')
-        range_ = [cols[x>4].color_picker('%s'%table_names_pretty[x],hex_codes[x], key="color%i"%x) for x in range(10)]
+        range_ = [cols[x>4].color_picker('%s'%table_names_pretty[x],hex_codes[x], key="color%i"%x, on_change=lambda: st.session_state.update(show_tutorial=False)) for x in range(10)]
+
+
+
 
 string = ""
 for i in range(len(hex_codes)):
+    luminance = get_luminance(hex_color=range_[i])
+
+    if luminance < 140:
+        col = "white"
+    else:
+        col = 'black'
+
     string+="""
     <style>
         span[data-baseweb="tag"][aria-label="%s, close by backspace"]{
             background-color: %s;
+            color: %s;
         }
     </style>
-    """%(table_names_pretty[i], range_[i])
+    """%(table_names_pretty[i], range_[i], col)
 st.markdown(string, unsafe_allow_html=True)
 
 #---------------------user select and highlight a certain galaxy by name using st.multiselect----------------------#
@@ -284,7 +397,7 @@ def gal_search():
 
     non_nan_galaxies = master_df.dropna(subset=[plot_xaxis, plot_yaxis])['name'].tolist()
     #st.write("Galaxies with non-nan values for selected x and y axis columns:", non_nan_galaxies)
-    highlight = st.multiselect('Highlight a galaxy by name', non_nan_galaxies, format_func=lambda x: x)
+    highlight = st.multiselect('Highlight a galaxy by name', non_nan_galaxies, format_func=lambda x: x, on_change=lambda: st.session_state.update(show_tutorial=False))
     return highlight
 selected_gals = gal_search()
 
@@ -298,13 +411,23 @@ st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', 
 string = ""
 for i in range(TOTAL_NUM_SYSTEMS-1):
     source_index = all_source_indices[i]
+    luminance = get_luminance(hex_color=range_[source_index])
+    #print(luminance)
+
+    if luminance < 140:
+        col = "white"
+    else:
+        col = 'black'
+
+
     string+="""
     <style>
         span[data-baseweb="tag"][aria-label="%s, close by backspace"]{
             background-color: %s;
+            color: %s
         }
     </style>
-    """%(ALL_SYSTEM_NAMES[i], range_[source_index])
+    """%(ALL_SYSTEM_NAMES[i], range_[source_index], col)
 st.markdown(string, unsafe_allow_html=True)
 
 # st.markdown("""
@@ -402,21 +525,6 @@ strokeWidthCondition=alt.when(hover_selection).then(alt.StrokeWidthValue(1)).oth
 
 
 
-#---------------------user select what values to show in tooltip----------------------#
-
-with st.sidebar:
-    def tooltip_items():
-        tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'])
-        # if tooltip_select:
-        #     st.toast(f"Selected {len(tooltip_select)} properties to display in the tooltip")
-        #tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
-        return tooltip_select
-# print([tab_desc[x]['desc'] for x in tooltip_select])
-#tooltip = tooltip_items()
-    tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_items()]
-
-    #st.write(tooltip)
-
 
 
 # ---------------------plot---------------------- #
@@ -462,31 +570,21 @@ selection_y = alt.selection_interval(
 
 unique_sources = master_df['source_pretty'].unique()
 unique_sources = sorted(unique_sources, key=lambda x: table_names_pretty.index(x))
-#print(unique_sources)
 
 charts_to_layer = []
 errors_to_layer = []
 
-# search_input = alt.param(
-#     value='',
-#     bind=alt.binding(
-#         input='search',
-#         placeholder="Galaxy",
-#         name='Search ',
-#     )
-# )
-# search_matches = alt.expr.test(alt.expr.regexp(search_input, "i"), alt.datum.name)
 when_hover = alt.when(hover_selection, empty=False)
 selection_click = alt.selection_point(empty=False, on='click', nearest=False)
 
 if len(selected_gals)!=0:
     opacity = alt.when(
-        alt.FieldOneOfPredicate(field='name', oneOf=selected_gals)).then(alt.value(1)).otherwise(alt.value(0.1))
+        alt.FieldOneOfPredicate(field='name', oneOf=selected_gals)).then(alt.value(1)).otherwise(alt.value(0.05))
 else:
     opacity = alt.value(1)
 
 
-base_chart = alt.Chart(master_df).mark_point(filled=True, size=50).encode(
+base_chart = alt.Chart(master_df[::-1]).mark_point(filled=True, size=50).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
      color=alt.Color('source_pretty',scale=alt.Scale(domain=table_names_pretty, range=range_), legend=alt.Legend(title='System Type')),
@@ -524,13 +622,9 @@ if plot_xaxis == 'M_V' and plot_yaxis == 'metallicity':
     charts_to_layer.append(mass_met)
 
 
-
-
-# def const_mu(muV, rhalf):
-#      return muV - 36.57 - 2.5 * np.log10(2.*np.pi*rhalf**2)
-
 if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
-    x = np.arange(1e0, 1e4, 10)
+    x = np.arange(1e0, 1e4, 1)
+    x = np.logspace(0, 4, 1000)
     for mu in [24, 26, 28, 30, 32]:
         const_mu = pd.DataFrame({
         "x":(x),
@@ -541,8 +635,8 @@ if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
             x=alt.X('x',scale=alt.Scale(type=type_x, reverse=reverse_x)),
             y=alt.Y('f(x)', scale=alt.Scale(type=type_y, reverse=reverse_y)),
             color=alt.value("black"),
-            text=alt.value(f'Const. $\mu_V$ = {mu}'),
-            tooltip=alt.value(f'Const. $\mu_V$ = {mu}'),
+            text=alt.value(f'μᵥ = {mu} mag/arcsec²'),
+            tooltip=alt.value(f'μᵥ= {mu} mag/arcsec²'),
             
         )
         charts_to_layer.append(const_mu_chart)
@@ -605,7 +699,7 @@ if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
 #st.altair_chart(text, use_container_width=True)
 
 if show_xerr:
-    xerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+    xerrorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
         x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         x2=alt.X2(plot_xaxis+"_high", title=""),
@@ -624,7 +718,7 @@ if show_xerr:
     charts_to_layer.append(xerrorbars)
 
     if plot_yaxis+"_ul" in master_df.keys():
-        xup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+        xup_errorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
             x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
             y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             x2=alt.X2(plot_xaxis+"_high", title=""),
@@ -642,7 +736,7 @@ if show_xerr:
         charts_to_layer.append(xup_errorbars)
 
 if show_yerr:
-    yerrorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+    yerrorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
         y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         y2=alt.Y2(plot_yaxis+"_high", title=""),
@@ -663,7 +757,7 @@ if show_yerr:
     charts_to_layer.append(yerrorbars)
 
     if plot_xaxis+"_ul" in master_df.keys():
-        yup_errorbars = alt.Chart(master_df).mark_errorbar(ticks=True).encode(
+        yup_errorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
             x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
             y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
             y2=alt.Y2(plot_yaxis+"_high", title=""),
@@ -684,7 +778,7 @@ if show_yerr:
 if plot_yaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
 
-    yul = alt.Chart(master_df).mark_point(shape="arrow", filled=True, strokeWidth=10).encode(
+    yul = alt.Chart(master_df[::-1]).mark_point(shape="arrow", filled=True, strokeWidth=10).encode(
         x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         #y2=alt.Y2(plot_yaxis+"_upper"),
@@ -705,7 +799,7 @@ if plot_yaxis+"_ul" in master_df.keys():
 if plot_xaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_xaxis+"_ul", title=tab_desc[plot_xaxis+"_ul"]['label']))
 
-    xul = alt.Chart(master_df).mark_point(shape="arrow", filled=True).encode(
+    xul = alt.Chart(master_df[::-1]).mark_point(shape="arrow", filled=True).encode(
         x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
         y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
         size=alt.value(500),
@@ -753,13 +847,17 @@ with st.container():
 
 #st.altair_chart(charts_to_layer[1], use_container_width=True)
 
-#st.toast('Welcome to the Local Volume Database!')
 
+#badge(type="github", name="apace7/local_volume_database/")
+# Add Link to your repo
+'''
+    Check out the data! [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database/) 
 
-badge(type="github", name="apace7/local_volume_database/")
+'''
+st.markdown("<br>",unsafe_allow_html=True)
 
-st.text('all dwarfs')
-st.dataframe(master_df, use_container_width=True) # use_container_width doesn't work??
+# st.text('all dwarfs')
+# st.dataframe(master_df, use_container_width=True) # use_container_width doesn't work??
 #st.text('dSphs in MW')
 #st.dataframe(dsph_mw, use_container_width=False)
 #st.dataframe(misc_host)
