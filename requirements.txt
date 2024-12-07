@@ -4,4 +4,4 @@ pandas
 altair
 astropy
 webcolors
-streamlit_theme
+st-theme
