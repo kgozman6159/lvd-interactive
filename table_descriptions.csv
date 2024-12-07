@@ -40,18 +40,18 @@ pmdec,float64,$\mu_{\delta }$,μ_δ,systemic proper motion in declination direct
 pmdec_em,float64,,,,N/A,bibcode_ref_proper_motion
 pmdec_ep,float64,,,,N/A,bibcode_ref_proper_motion
 ref_proper_motion,str,,,reference for proper motion,N/A,N/A
-metallicity_spectroscopic,float64,[Fe/H]_{\rm  spec},[Fe/H]_{\rm  spec},spectroscopic metallicity,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic,float64,[Fe/H]_{\rm  spec},[Fe/H]_spec,spectroscopic metallicity,N/A,bibcode_ref_metallicity_spectroscopic
 metallicity_spectroscopic_em,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
 metallicity_spectroscopic_ep,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
-metallicity_spectroscopic_sigma,float64,\sigma_{[Fe\H_{\rm spec}]},\sigma_{[Fe\H_{\rm spec}]},spectroscopic metallicity dispersion,N/A,bibcode_ref_metallicity_spectroscopic
+metallicity_spectroscopic_sigma,float64,\sigma_{[Fe\H_{\rm spec}]},σ_{Fe\H_spec]},spectroscopic metallicity dispersion,N/A,bibcode_ref_metallicity_spectroscopic
 metallicity_spectroscopic_sigma_em,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
 metallicity_spectroscopic_sigma_ep,float64,,,,N/A,bibcode_ref_metallicity_spectroscopic
 metallicity_spectroscopic_sigma_ul,float64,,upper lim sigma Fe/H,,N/A,bibcode_ref_metallicity_spectroscopic
 ref_metallicity_spectroscopic,str,,,reference for spectroscopic metallicity,N/A,N/A
-rcore,float64,\rm r_{core},\rm r_{core},profile fits with king profile,arcmin,bibcode_ref_structure_king
+rcore,float64,\rm r_{core},r_{core},profile fits with king profile,arcmin,bibcode_ref_structure_king
 rcore_em,float64,,,,N/A,bibcode_ref_structure_king
 rcore_ep,float64,,,,N/A,bibcode_ref_structure_king
-rking,float64,\rm r_{king},\rm r_{king},profile fits with king profile,arcmin,bibcode_ref_structure_king
+rking,float64,\rm r_{king},r_{king},profile fits with king profile,arcmin,bibcode_ref_structure_king
 rking_em,float64,,,,N/A,bibcode_ref_structure_king
 rking_ep,float64,,,,N/A,bibcode_ref_structure_king
 ref_structure_king,str,,,,N/A,N/A
@@ -66,7 +66,7 @@ age,float64,Age,Age,age of system,Gyr,bibcode_ref_age
 age_em,float64,,,,N/A,bibcode_ref_age
 age_ep,float64,,,,N/A,bibcode_ref_age
 ref_age,str,,,,N/A,N/A
-metallicity_isochrone,float64,[Fe/H]_{\rm  iso},[Fe/H]_{\rm  iso},metallicity from isochrone or cmd fitting,N/A,bibcode_ref_metallicity_isochrone
+metallicity_isochrone,float64,[Fe/H]_{\rm  iso},[Fe/H]_iso,metallicity from isochrone or cmd fitting,N/A,bibcode_ref_metallicity_isochrone
 metallicity_isochrone_em,float64,,,,N/A,bibcode_ref_metallicity_isochrone
 metallicity_isochrone_ep,float64,,,,N/A,bibcode_ref_metallicity_isochrone
 ref_metallicity_isochrone,str,,,,N/A,N/A
