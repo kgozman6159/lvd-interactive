@@ -380,9 +380,14 @@ with st.sidebar:
         
         filter_values = {}
         for col in filter_columns:
+            if tab_desc[col]["unit"] == "N/A":
+                label = f'{tab_desc[col]["label"]}'
+            else:
+                #label = f'({tab_desc[col]["unit"]})'
+                label = f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})'
             if tab_desc[col]['dtype'] == 'float64' or tab_desc[col]['dtype'] == 'int64':
                 min_val, max_val = master_df[col].min(), master_df[col].max()
-                filter_values[col] = filter_container.slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', min_val, max_val, (min_val, max_val), step=0.01, on_change=lambda: st.session_state.update(show_tutorial=False))
+                filter_values[col] = filter_container.slider(label, min_val, max_val, (min_val, max_val), step=0.01, on_change=lambda: st.session_state.update(show_tutorial=False))
                 #filter_values[col] = filter_container.select_slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', sorted(master_df[col]), (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
 
             else:
@@ -396,26 +401,6 @@ with st.sidebar:
                 master_df = master_df[(master_df[col] >= val[0]) & (master_df[col] <= val[1])]
             else:
                 master_df = master_df[master_df[col].isin(val)]
-
-# # filter by confirmed dwarf
-# confirmed_dwarf = st.sidebar.multiselect('Confirmed Dwarf', dwarf_all['confirmed_dwarf'].unique())
-# if confirmed_dwarf:
-#     dwarf_all = dwarf_all[dwarf_all['confirmed_dwarf'].isin(confirmed_dwarf)]
-# # filter by confirmed real
-# confirmed_real = st.sidebar.multiselect('Confirmed Real', dwarf_all['confirmed_real'].unique())
-# if confirmed_real:
-#     dwarf_all = dwarf_all[dwarf_all['confirmed_real'].isin(confirmed_real)]
-# # filter by distance
-# distance = st.sidebar.slider('Distance (kpc)', dwarf_all['distance'].min(), dwarf_all['distance'].max(), (dwarf_all['distance'].min(), dwarf_all['distance'].max()))
-# dwarf_all = dwarf_all[(dwarf_all['distance'] >= distance[0]) & (dwarf_all['distance'] <= distance[1])]
-# # filter by apparent magnitude
-# apparent_magnitude_v = st.sidebar.slider('Apparent Magnitude V', dwarf_all['apparent_magnitude_v'].min(), dwarf_all['apparent_magnitude_v'].max(), (dwarf_all['apparent_magnitude_v'].min(), dwarf_all['apparent_magnitude_v'].max()))
-# dwarf_all = dwarf_all[(dwarf_all['apparent_magnitude_v'] >= apparent_magnitude_v[0]) & (dwarf_all['apparent_magnitude_v'] <= apparent_magnitude_v[1])]
-# # filter by vlos systemic
-# vlos_systemic = st.sidebar.slider('Vlos Systemic', dwarf_all['vlos_systemic'].min(), dwarf_all['vlos_systemic'].max(), (dwarf_all['vlos_systemic'].min(), dwarf_all['vlos_systemic'].max()))
-# dwarf_all = dwarf_all[(dwarf_all['vlos_systemic'] >= vlos_systemic[0]) & (dwarf_all['vlos_systemic'] <= vlos_systemic[1])]
-
-
 
 
 #---------------------user select color for each source----------------------#
