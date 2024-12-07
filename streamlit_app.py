@@ -21,7 +21,9 @@ st.set_page_config(layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
     'Report a bug': "https://github.com/kgozman6159/lvd-interactive/issues",
-    'About': "Made with :heart: by Katya Gozman using Streamlit :streamlit:, python, Altair, and Pandas. Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)!"
+    'About': """Made with :heart: by Katya Gozman using Streamlit :streamlit:, python, Altair, and Pandas. 
+    If you have any feature requests or find any bugs, please report them on the GitHub page or email me at kgozman [at] umich [dot] edu!
+    """
   }
 
 )
@@ -921,6 +923,23 @@ with st.expander("Description of Catalogs"):
 
 
 
+with st.expander("Roadmap"):
+    st.markdown("""
+                #### last updated December 2024
+
+            :red-background[**Bug Fixes :beetle:**] 
+            - [ ] Filtering by properties currently doesn't display upper limits
+            - [ ] Fix some tick labels for properties that need scientific notation (like for dynamical mass)
+            - [ ] Prettify labels of host galaxies in the tooltip and filter
+            - [ ] Make error bars and upper limits appear on top of other points when hovered over 
+            - [ ] Prettify labels for certain properties. Altair doesn't support LaTex, so this may be difficult for now.
+                                
+            :green-background[**Features :sparkles:**]
+            - [ ] Do something on click of a point (like display a table of properties). Currently unavailable because Streamlit doesn't yet support click events on layered Altair charts.
+            - [ ] Add a way to link to the reference paper for different properties (may not happen until above point is implemented in Streamlit)
+            - [ ] Add page to display histograms of object properties
+            - [ ] Add page to display 3D, interactive map of objects
+                """)
     
 st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)!")
 st.markdown("Look at the documentation on [![readthedocs](https://img.shields.io/badge/readthedocs-ffffff?logo=readthedocs&style=flat&color=ffffff&logoColor=8CA1AF)](https://local-volume-database.readthedocs.io/en/latest/index.html)")
