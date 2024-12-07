@@ -9,7 +9,7 @@ from astropy.io import fits
 import astropy.table as table
 from astropy.io import ascii
 
-from astropy import units as u
+from astropy import units as u 
 
 import astropy.coordinates as coord
 
@@ -30,9 +30,9 @@ import altair as alt
 import re
 from webcolors import name_to_hex
 
-from streamlit_extras.badges import badge 
+#from streamlit_extras.badges import badge 
 from streamlit_theme import st_theme
-import streamlit.components.v1 as components
+#import streamlit.components.v1 as components
 
 #rom vega_datasets import data
 
