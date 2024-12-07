@@ -460,7 +460,11 @@ st.markdown(string, unsafe_allow_html=True)
 
 with st.sidebar:
     def tooltip_items():
-        tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, default=['name', 'host', plot_xaxis, plot_yaxis], format_func=lambda x: tab_desc[x]['label'], on_change=lambda: st.session_state.update(show_tutorial=False))
+        tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, 
+                                        default=['name', 'host', plot_xaxis, plot_yaxis], 
+                                        format_func=lambda x: tab_desc[x]['label'], 
+                                        on_change=lambda: st.session_state.update(show_tutorial=False), 
+                                        help='Choose what properties are displayed when you hover over a point in the plot. If the property is not in the data, it will be displayed as "null".')
         # if tooltip_select:
         #     st.toast(f"Selected {len(tooltip_select)} properties to display in the tooltip")
         #tooltip = [alt.Tooltip(x, title=tab_desc[x]['label']) for x in tooltip_select]
