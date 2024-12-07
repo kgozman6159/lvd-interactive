@@ -13,8 +13,8 @@ from astropy import units as u
 
 import astropy.coordinates as coord
 
-import local_volume_database # idk what this does yet
-from collections import OrderedDict
+#import local_volume_database # idk what this does yet
+#from collections import OrderedDict
 st.set_page_config(layout="wide",
     page_title="Local Volume Database",
     page_icon="🌌",
@@ -67,7 +67,7 @@ import streamlit.components.v1 as components
 
 
 # st.altair_chart(chart, use_container_width=True)
-
+#print("*@&#*@&3847@&*#&@#")
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
 
@@ -147,7 +147,7 @@ source_mapping = {name: idx for idx, name in enumerate(table_names_pretty)} # tu
 all_source_indices = master_df['source_pretty'].copy().map(source_mapping) # for mapping to colors later
 
 #ALL_SOURCES = master_df['source_pretty_num'].copy()
-print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len(dsph_lf_distant)+len(gc_ambiguous)+len(gc_mw_new)+len(gc_harris)+len(gc_dwarf_hosted)+len(gc_other)+len(candidate),len(misc_host))
+#print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len(dsph_lf_distant)+len(gc_ambiguous)+len(gc_mw_new)+len(gc_harris)+len(gc_dwarf_hosted)+len(gc_other)+len(candidate),len(misc_host))
 #st.dataframe(dwarf_all, use_container_width=True) # use_container_width doesn't work??
 #st.dataframe(master_df, use_container_width=True)
 
@@ -189,7 +189,7 @@ div[data-testid="stDialog"] div[role="dialog"] {
 def tutorial():
     string = """
     This website lets you plot different properties of dwarf galaxies and globular clusters in the Local Volume. 
-    These properties are collated in the Local Volume Database, which is maintained by Andrew Pace."""
+    These properties are collated in the Local Volume Database, which has been compiled and is maintained by Andrew Pace."""
 
     st.header(string)
     
@@ -228,7 +228,7 @@ def tutorial():
     """)
         
     st.markdown("""
-                Click on the :material/more_vert: icon in the top right of the sidebar to change appearance settings and report bugs
+                Click on the :material/more_vert: icon in the top right of the sidebar to change appearance settings and report bugs.
                 """)
         
     st.caption("""
@@ -246,21 +246,6 @@ if st.session_state.show_tutorial:
 
 if st.sidebar.button("Show Tutorial", on_click=lambda: st.session_state.update(show_tutorial=True)):
     st.session_state.show_tutorial = True
-
-# if st.session_state.show_tutorial:
-#     tutorial()
-#     st.session_state.show_tutorial = False
-
-
-
-# my_expander = st.expander(label='Click me for help!', expanded=False, icon="❓")
-# with my_expander:
-#     'Hello there!'
-#     clicked = st.button('Click me!')
-
-#st.title("Welcome to the interactive Local Volume Database!")
-
-
     
 
 with st.sidebar:
@@ -275,7 +260,7 @@ tab_desc = tab_desc.T.to_dict(index='property')
 # print(tab_desc.keys())
 #st.write(tab_desc)
 # st.write(tab_desc['rhalf_physical']['desc'])
-valid_plot_cols = ['key', 'ra', 'dec', 'name', 'host', 'confirmed_real', 
+valid_plot_cols = ['ra', 'dec', 'name', 'host', 'confirmed_real', 
                    'confirmed_dwarf', 'rhalf',  'position_angle', 'ellipticity', 
                    'distance_modulus', 'apparent_magnitude_v', 
                    'vlos_systemic', 'vlos_sigma', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
@@ -397,10 +382,12 @@ with st.sidebar:
         for col in filter_columns:
             if tab_desc[col]['dtype'] == 'float64' or tab_desc[col]['dtype'] == 'int64':
                 min_val, max_val = master_df[col].min(), master_df[col].max()
-                filter_values[col] = filter_container.slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', min_val, max_val, (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
+                filter_values[col] = filter_container.slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', min_val, max_val, (min_val, max_val), step=0.01, on_change=lambda: st.session_state.update(show_tutorial=False))
+                #filter_values[col] = filter_container.select_slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', sorted(master_df[col]), (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
+
             else:
                 unique_vals = master_df[col].unique()
-                filter_values[col] = filter_container.multiselect(f'{tab_desc[col]["label"]}', unique_vals, default=unique_vals, on_change=lambda: st.session_state.update(show_tutorial=False))
+                filter_values[col] = filter_container.multiselect(f'{tab_desc[col]["label"]}', unique_vals, on_change=lambda: st.session_state.update(show_tutorial=False))
         #st.form_submit_button('Apply Filters', on_click=lambda: st.session_state.update(show_tutorial=False))
 
 
@@ -574,15 +561,24 @@ color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('
 #     alt.StrokeWidthValue(1),
 #     alt.StrokeWidthValue(0)
 # )
-if theme['base'] == 'light':
+#print("THEME", theme)
+if theme == None:
     strokeColor = alt.value('black')
     strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
             domain=table_names_pretty, range=range_), title='Source', legend=None))
-else:
+elif theme['base'] == 'light':
+    strokeColor = alt.value('black')
+    strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
+            domain=table_names_pretty, range=range_), title='Source', legend=None))
+elif theme['base'] == 'dark':
     strokeColor = alt.value('white')
     strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
             domain=table_names_pretty, range=range_), title='Source', legend=None))
-
+else:
+    strokeColor = alt.value('black')
+    strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
+            domain=table_names_pretty, range=range_), title='Source', legend=None))
+    
 strokeWidthCondition=alt.when(hover_selection).then(alt.StrokeWidthValue(1)).otherwise(alt.StrokeWidthValue(0))
 
 # strokeErrorCondition=alt.condition(
@@ -915,7 +911,25 @@ def plot_dwarf_all():
 with st.container():
     plot_dwarf_all()
 
+st.markdown("Filtered Galaxies")
 st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
+
+with st.expander("Description of Catalogs"):
+    #st.markdown("### Description of Catalogs")
+    st.markdown("""
+            These descriptions are taken from the official [documentation on using Local Volume Database catalogs](https://local-volume-database.readthedocs.io/en/latest/usage.html#decription-of-catalogs-tables).
+            - **MW Dwarfs:** Milky Way dwarf galaxies (the most distant dwarf galaxy is Eridanus II at ~ 350 kpc).
+            - **M31 Dwarfs:** M31 dwarf galaxies
+            - **Local Field Dwarfs:** dwarf galaxies outside of MW/M31 within the Local Field to a distance of ~ 3 Mpc. This is an extension of galaxies from McConnachie 2012 compilation.
+            - **Local Field Distance Dwarfs:** dwarf galaxies in the Local Volume with distance > 3 Mpc. The limiting distance is set to ~10-40 Mpc (the approximate limits of HST/JWST). This table is not complete to known systems (it is complete for known systems to a distance < 3.5 Mpc).
+            - **Ambiguous GCs:** systems with an ambiguous classification (referred to as ambiguous or hyper-faint compact stellar systems in the LVDB). These are all MW halo systems.
+            - **New MW GCs:** newly discovered globular clusters or candidate globular clusters (i.e. post-Harris catalog). Many systems are at low Galactic latitude (abs(b) <10-20 deg) and candidate systems may be open clusters.
+            - **Harris GCs:** globular clusters in Harris catalog (this excludes Koposov 1 and 2 which are in the gc_abmiguous table).
+            - **Dwarf Hosted GCs:** globular clusters hosted by dwarf galaxies. This does not include the Sagittarius globular clusters which are in gc_harris. This catalog is incomplete for known systems.
+            - **Other GCs:** for other globular clusters. (mostly for future work)
+            - **Candidates:** known false-positive candidates, background galaxies, or low confidence candidates. Only included in the release page.
+                        """)
+
 
     
 st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)!")
