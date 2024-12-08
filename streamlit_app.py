@@ -415,7 +415,7 @@ def get_luminance(hex_color):
     hex_blue = int(color[4:6], base=16)
     return hex_red * 0.2126 + hex_green * 0.7152 + hex_blue * 0.0722
 
-hex_codes = ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#FFC000', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac']
+hex_codes = ['#4c78a8', '#f58518', '#F54034', '#18BDB6', '#54a24b', '#FFC000', '#b279a2', '##FF8E92', '#9d755d', '#BDC0BC']
 with st.sidebar:
     with st.popover("Color selection", use_container_width=False, help='Change the color of each source in the plot'):
         cols = st.columns(2, vertical_alignment="top", gap='medium')
