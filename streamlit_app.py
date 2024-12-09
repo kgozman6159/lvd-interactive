@@ -72,7 +72,7 @@ from streamlit_theme import st_theme
 #print("*@&#*@&3847@&*#&@#")
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
-release = 'v1.0.1'
+release = 'v1.0.0'
 # ---------------------load data---------------------- #
 @st.cache_data
 def load_data():
@@ -947,9 +947,15 @@ with st.expander("Roadmap"):
             - [ ] Encode a 3rd data type into color 
                 """)
     
+
 st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)! This app uses data from Release %s"%release)
 st.markdown("Look at the documentation on [![readthedocs](https://img.shields.io/badge/readthedocs-ffffff?logo=readthedocs&style=flat&color=ffffff&logoColor=8CA1AF)](https://local-volume-database.readthedocs.io/en/latest/index.html)")
 st.markdown("Read the paper on [![arXiv](https://img.shields.io/badge/arXiv-ffffff?logo=arxiv&style=flat&color=ffffff&logoColor=B31B1B)](https://arxiv.org/abs/2411.07424)")
+st.divider()
+with st.container():
+
+    st.markdown("Made with :heart: by Katya Gozman using Streamlit :streamlit:, python, Altair, and Pandas.")    
+
 #st.altair_chart(charts_to_layer[1], use_container_width=True)
 
 
