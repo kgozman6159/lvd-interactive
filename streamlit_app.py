@@ -72,23 +72,24 @@ from streamlit_theme import st_theme
 #print("*@&#*@&3847@&*#&@#")
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
-
+release = 'v1.0.1'
 # ---------------------load data---------------------- #
 @st.cache_data
 def load_data():
+    
     # loads versions from latest github release
-    dwarf_all = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/dwarf_all.csv')
-    dsph_mw = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/dwarf_mw.csv')
-    dsph_m31 = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/dwarf_m31.csv')
-    dsph_lf = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/dwarf_local_field.csv')
-    dsph_lf_distant = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/dwarf_local_field_distant.csv')
-    gc_ambiguous = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/gc_ambiguous.csv')
-    gc_mw_new = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/gc_mw_new.csv')
-    gc_harris = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/gc_harris.csv')
-    gc_dwarf_hosted = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/gc_dwarf_hosted.csv')
-    gc_other = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/gc_other.csv')
-    candidate = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/candidate.csv')
-    misc_host = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.0/misc_host.csv')
+    dwarf_all = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_all.csv'%release)
+    dsph_mw = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_mw.csv'%release)
+    dsph_m31 = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_m31.csv'%release)
+    dsph_lf = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_local_field.csv'%release)
+    dsph_lf_distant = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_local_field_distant.csv'%release)
+    gc_ambiguous = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_ambiguous.csv'%release)
+    gc_mw_new = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_mw_new.csv'%release)
+    gc_harris = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_harris.csv'%release)
+    gc_dwarf_hosted = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_dwarf_hosted.csv'%release)
+    gc_other = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_other.csv'%release)
+    candidate = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/candidate.csv'%release)
+    misc_host = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/misc_host.csv'%release)
 
     # ----don't know if I need thes below since dsph_mw already has columns for the wolf dynamical mass and HI mass UL which are very similar ----#
 
@@ -128,7 +129,8 @@ def load_data():
             #         print(val[match.start():])
                 
 
-            combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: "https://ui.adsabs.harvard.edu/abs/"+ x[re.search(r'\d+', x).start():] if re.search(r'\d+', x) else "N/A")
+            #combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: "https://ui.adsabs.harvard.edu/abs/"+ x[re.search(r'\d+', x).start():] if re.search(r'\d+', x) else "N/A")
+            combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: x[-19:]) # bibcodes are strickly 19 characters long so just get the last 19 characters of the ref string
 
         combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
@@ -389,7 +391,7 @@ with st.sidebar:
                 label = f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})'
             if tab_desc[col]['dtype'] == 'float64' or tab_desc[col]['dtype'] == 'int64':
                 min_val, max_val = master_df[col].min(), master_df[col].max()
-                filter_values[col] = filter_container.slider(label, min_val, max_val, (min_val, max_val), step=0.01, on_change=lambda: st.session_state.update(show_tutorial=False))
+                filter_values[col] = filter_container.slider(label, min_val, max_val, (min_val, max_val), step=0.1, on_change=lambda: st.session_state.update(show_tutorial=False))
                 #filter_values[col] = filter_container.select_slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', sorted(master_df[col]), (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
 
             else:
@@ -637,7 +639,7 @@ selection_click = alt.selection_point(empty=False, on='click', nearest=False)
 
 if len(selected_gals)!=0:
     opacity = alt.when(
-        alt.FieldOneOfPredicate(field='name', oneOf=selected_gals)).then(alt.value(1)).otherwise(alt.value(0.05))
+        alt.FieldOneOfPredicate(field='name', oneOf=selected_gals)).then(alt.value(1)).otherwise(alt.value(0.1))
 else:
     opacity = alt.value(1)
 
@@ -890,7 +892,8 @@ charts_to_layer.append(base_chart)
 
 def plot_dwarf_all():
     #layered = base_chart+xerrorbars
-    layered = (alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0)))).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
+    layered = (alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0)))).project(
+    type=alt.expr('orthographic')).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
     #print(layered.to_json())
     #print("@#&@*(#@(#)@)*#@#@")
     
@@ -933,6 +936,7 @@ with st.expander("Roadmap"):
             - [ ] Prettify labels of host galaxies in the tooltip and filter
             - [ ] Make error bars and upper limits appear on top of other points when hovered over 
             - [ ] Prettify labels for certain properties. Altair doesn't support LaTex, so this may be difficult for now.
+            - [ ] f_HI broken when displaying logarithmic scale
                                 
             :green-background[**Features :sparkles:**]
             - [ ] Do something on click of a point (like display a table of properties). Currently unavailable because Streamlit doesn't yet support click events on layered Altair charts.
@@ -943,7 +947,7 @@ with st.expander("Roadmap"):
             - [ ] Encode a 3rd data type into color 
                 """)
     
-st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)!")
+st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)! This app uses data from Release %s"%release)
 st.markdown("Look at the documentation on [![readthedocs](https://img.shields.io/badge/readthedocs-ffffff?logo=readthedocs&style=flat&color=ffffff&logoColor=8CA1AF)](https://local-volume-database.readthedocs.io/en/latest/index.html)")
 st.markdown("Read the paper on [![arXiv](https://img.shields.io/badge/arXiv-ffffff?logo=arxiv&style=flat&color=ffffff&logoColor=B31B1B)](https://arxiv.org/abs/2411.07424)")
 #st.altair_chart(charts_to_layer[1], use_container_width=True)
