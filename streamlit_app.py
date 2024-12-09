@@ -831,7 +831,7 @@ if show_yerr:
             order=alt.value(1)
             #opacity=alt.when(selection).then(alt.value(1)).otherwise(alt.value(0))
             ).transform_filter(
-            (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan')
+            (alt.datum[plot_yaxis+"_low"] != 0) & (alt.datum[plot_yaxis+"_high"] != 0) & (alt.datum[plot_xaxis+"_ul"] != 'nan') & (alt.datum[plot_xaxis+"_ul"] != 0)
             )#.add_params(hover_selection)
         charts_to_layer.append(yup_errorbars)
 
@@ -852,7 +852,7 @@ if plot_yaxis+"_ul" in master_df.keys():
         yOffset=alt.value(10), # not sure why 10 works here to move the arrow to go from the center to the top of the point
         #size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
-        (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0) 
+        (alt.datum[plot_yaxis+"_upper"] != 0) & (alt.datum[plot_xaxis] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan') & (alt.datum[plot_yaxis+"_ul"] != 0)
     )#.add_params(hover_selection)
     charts_to_layer.append(yul)
 
@@ -871,7 +871,7 @@ if plot_xaxis+"_ul" in master_df.keys():
         strokeWidth=strokeWidthCondition,
         #size=alt.when(selection).then(alt.value(10)).otherwise(alt.value(0))
     ).transform_filter(
-        (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0) 
+        (alt.datum[plot_xaxis+"_upper"] != 0) & (alt.datum[plot_yaxis] != 0) & (alt.datum[plot_yaxis+"_ul"] != 'nan') & (alt.datum[plot_yaxis+"_ul"] != 0)
     )#.add_params(hover_selection)
     charts_to_layer.append(xul)
 
@@ -936,7 +936,7 @@ with st.expander("Roadmap"):
             - [ ] Prettify labels of host galaxies in the tooltip and filter
             - [ ] Make error bars and upper limits appear on top of other points when hovered over 
             - [ ] Prettify labels for certain properties. Altair doesn't support LaTex, so this may be difficult for now.
-            - [ ] f_HI broken when displaying logarithmic scale
+            - [x] f_HI broken when displaying logarithmic scale
                                 
             :green-background[**Features :sparkles:**]
             - [ ] Do something on click of a point (like display a table of properties). Currently unavailable because Streamlit doesn't yet support click events on layered Altair charts.
