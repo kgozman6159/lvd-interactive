@@ -36,40 +36,7 @@ from webcolors import name_to_hex
 from streamlit_theme import st_theme
 #import streamlit.components.v1 as components
 
-#rom vega_datasets import data
 
-
-
-# cars = data.cars()
-# chart = alt.Chart(cars).mark_circle().encode(
-#         x=alt.X('Miles_per_Gallon', title=''),
-#         y='Weight_in_lbs',
-#         color='Origin'
-# )
-
-# text = alt.Chart().mark_text(
-#     align="center",
-#     baseline="top",
-#     fontSize=11,
-#     fontWeight=600,
-#     #color='#007bff',
-#     href='https://stackoverflow.com'
-# ).encode(
-#     x=alt.value(200),  # pixels from left
-#     y=alt.value(322),  # pixels from top
-#     text=alt.value("Miles_per_Gallon")
-# )
-
-# chart = text + chart
-# chart['usermeta'] = {
-#     "embedOptions": {
-#         'loader': {'target': '_blank'}
-#     }
-# }
-
-
-# st.altair_chart(chart, use_container_width=True)
-#print("*@&#*@&3847@&*#&@#")
 table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
 release = 'v1.0.0'
@@ -122,11 +89,6 @@ def load_data():
         
         if ("ref" in key):
             combined_df[key] = combined_df[key].fillna("No reference")
-            # for val in combined_df[key]:
-            #     print(val)
-            #     match = re.search(r'\d+', val)
-            #     if match:
-            #         print(val[match.start():])
                 
 
             #combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: "https://ui.adsabs.harvard.edu/abs/"+ x[re.search(r'\d+', x).start():] if re.search(r'\d+', x) else "N/A")
@@ -134,10 +96,6 @@ def load_data():
 
         #combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
-        #combined_df = combined_df.iloc[::-1]
-        # for key in dwarf_all.keys():
-        #     if key.endswith('_em') or key.endswith('_ep'):
-        #         dwarf_all[key].fillna(0, inplace=True)
 
     return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
 
@@ -258,12 +216,9 @@ with st.sidebar:
 #print(dwarf_all['M_V_high'])
 tab_desc = pd.read_csv('table_descriptions.csv', index_col='property', keep_default_na=False)
 tab_desc['reference'] = tab_desc['reference'].replace('N/A', '')
-#print(tab_desc['reference'])
-#print(tab_desc.iloc[0].unit)
+
 tab_desc = tab_desc.T.to_dict(index='property')
-# print(tab_desc.keys())
-#st.write(tab_desc)
-# st.write(tab_desc['rhalf_physical']['desc'])
+
 valid_plot_cols = ['ra', 'dec', 'name', 'host', 'confirmed_real', 
                    'confirmed_dwarf', 'rhalf',  'position_angle', 'ellipticity', 
                    'distance_modulus', 'apparent_magnitude_v', 
@@ -326,18 +281,6 @@ def get_axis_specs(axis, key):
 
 # ---------------------sidebar---------------------- #
 
-# with st.sidebar:
-#     with st.container(border=True, key='xcont') as xcont:
-#         left, right = st.columns([7,1], vertical_alignment="top")
-#         plot_xaxis = left.selectbox('x-axis', valid_plot_cols, index=1, format_func=lambda x: tab_desc[x]['label'], label_visibility='visible')
-#         right.caption("---", help=tab_desc[plot_xaxis]['desc'])
-#         type_x, reverse_x, xlabel, channel_x, show_xerr = get_axis_specs(plot_xaxis, 'xaxis')
-#     with st.container(border=True, key='ycont') as ycont:
-#         left, right = st.columns([7,1], vertical_alignment="top")
-#         plot_yaxis = left.selectbox('y-axis', valid_plot_cols, index=2, format_func=lambda x: tab_desc[x]['label'])
-#         right.caption("---", help=tab_desc[plot_yaxis]['desc'])
-#         type_y, reverse_y, ylabel, channel_y, show_yerr = get_axis_specs(plot_yaxis, 'yaxis')
-
 if "my_key1" not in st.session_state:
     st.session_state.my_key1 = "ra"
 if "my_key2" not in st.session_state:
@@ -354,16 +297,6 @@ with st.sidebar:
         plot_yaxis = st.selectbox('y-axis', valid_plot_cols, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}", on_change=lambda: st.session_state.update(show_tutorial=False))
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr, yref = get_axis_specs(plot_yaxis, 'yaxis')
-# st.selectbox(
-#     "Make a selection",
-#     ["Default", "Apple", "Banana", "Carrot"],
-#     key="my_key",
-#     help=f"You've selected {st.session_state.my_key}"
-# )
-
-
-
-
 
 
 # ---------------------filtering---------------------- #
@@ -397,7 +330,6 @@ with st.sidebar:
             else:
                 unique_vals = master_df[col].unique()
                 filter_values[col] = filter_container.multiselect(f'{tab_desc[col]["label"]}', unique_vals, on_change=lambda: st.session_state.update(show_tutorial=False))
-        #st.form_submit_button('Apply Filters', on_click=lambda: st.session_state.update(show_tutorial=False))
 
 
         for col, val in filter_values.items():
@@ -422,8 +354,6 @@ with st.sidebar:
     with st.popover("Color selection", use_container_width=False, help='Change the color of each source in the plot'):
         cols = st.columns(2, vertical_alignment="top", gap='medium')
         range_ = [cols[x>4].color_picker('%s'%table_names_pretty[x],hex_codes[x], key="color%i"%x, on_change=lambda: st.session_state.update(show_tutorial=False)) for x in range(10)]
-
-
 
 
 string = ""
@@ -473,10 +403,7 @@ def gal_search():
 selected_gals = gal_search()
 
 filtered_df = master_df[master_df['name'].isin(selected_gals)]
-    # print(highlight)
-    # print(master_df['name'].unique())
 
-#print(selected_gals)
 
 string = ""
 for i in range(TOTAL_NUM_SYSTEMS-1):
@@ -500,19 +427,6 @@ for i in range(TOTAL_NUM_SYSTEMS-1):
     """%(ALL_SYSTEM_NAMES[i], range_[source_index], col)
 st.markdown(string, unsafe_allow_html=True)
 
-# st.markdown("""
-#     <style>
-#         span[data-baseweb="tag"][aria-label="MW Dwarfs, close by backspace"]{
-#             background-color: %s;
-#         }
-#         span[data-baseweb="tag"][aria-label="M31 Dwarfs, close by backspace"]{
-#             background-color: %s;
-#         }
-#         span[data-baseweb="tag"][aria-label="option3, close by backspace"]{
-#             background-color: %s;
-#         }
-#     </style>
-#     """%(hex_codes[0], hex_codes[1], hex_codes[2]), unsafe_allow_html=True)
 
 
 #-----create selections and conditions for interactivity-----#
@@ -527,16 +441,6 @@ selection = alt.selection_point(fields=['source_pretty'], bind='legend',nearest=
 #print(range_)
 hover_selection = alt.selection_point(on='mouseover', nearest=False, empty=False)
 
-# color = alt.condition(
-#     hover_selection,
-#     alt.value('black'),
-#     alt.Color('source_pretty', scale=alt.Scale(scheme=color_scale), legend=alt.Legend(title='Source'), sort=table_names_pretty)
-# )
-
-# color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', 
-#                                                                                scale=alt.Scale(scheme=color_scale), 
-#                                                                                legend=alt.Legend(title='Source'), 
-#                                                                                sort=table_names_pretty))
 
 
 color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('source_pretty:N', 
@@ -554,7 +458,7 @@ color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('
 #     alt.StrokeWidthValue(1),
 #     alt.StrokeWidthValue(0)
 # )
-#print("THEME", theme)
+
 if theme == None:
     lineColor = alt.value('black')
     strokeColor = alt.value('black')
@@ -593,26 +497,6 @@ strokeWidthCondition=alt.when(hover_selection).then(alt.StrokeWidthValue(1)).oth
 
 # ---------------------plot---------------------- #
 
-
-#print(tab_desc['ra'])
-#print(np.unique(master_df['source']))
-
-# selection_x = alt.selection_interval(
-#     bind='scales',
-#     encodings=["x"],
-#     zoom="wheel![event.altKey]",
-# )
-# selection_y = alt.selection_interval(
-#     bind='scales',
-#     encodings=["y"],
-#     zoom="wheel![event.shiftKey]",
-# )
-
-# selection_both = alt.selection_interval(
-#     bind='scales',
-#     encodings=["x", "y"],
-#     zoom="wheel![event.ctrlKey & !event.shiftKey & !event.altKey]",
-# )
 
 selection_x = alt.selection_interval(
     bind='scales',
@@ -679,10 +563,7 @@ if plot_xaxis == 'M_V' and plot_yaxis == 'metallicity':
         text=alt.value('Mass-Met'),
         tooltip=alt.value('Relation from Simon 2019'),
 
-        
     )
-
-
     charts_to_layer.append(mass_met)
 
 
@@ -705,62 +586,6 @@ if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
         )
         charts_to_layer.append(const_mu_chart)
 
-
-
-#charts_to_layer.append(base_chart)
-
-#help(alt.Chart.configure_point)
-
-#print(plot_yaxis+"_ul")
-
-# text = alt.Chart(master_df).mark_text(
-#     align="left", baseline="top", href='www.google.com',
-# ).encode(
-#     x=alt.value(0.0),
-#     y=alt.value(3),
-#     #x=alt.value(5),  # pixels from left
-#     #y=alt.value(5),  # pixels from top
-#     text=xref,
-   
-#     opacity=alt.condition(selection_click, alt.value(1.0), alt.value(0.0)),
-#     size=alt.value(10),
-#     )
-#charts_to_layer.append(text)
-
-#print(master_df['image'][0])
-# image = alt.Chart(master_df).mark_image(
-#     width=50, height=50).encode(
-#         x=alt.value(0),
-#         y=alt.value(3),
-#         url="img:N", 
-#         size=alt.value(1),
-#         #opacity=alt.condition(selection_click, alt.value(1.0), alt.value(0.0)),
-#         #href='xref'
-#         )
-#charts_to_layer.append(image)
-# source = pd.DataFrame.from_records(
-#     [
-#         {
-#             "x": 0.5,
-#             "y": 0.5,
-#             "img": "https://vega.github.io/vega-datasets/data/ffox.png",
-#         },
-#         {
-#             "x": 1.5,
-#             "y": 1.5,
-#             "img": "https://vega.github.io/vega-datasets/data/gimp.png",
-#         },
-#         {
-#             "x": 2.5,
-#             "y": 2.5,
-#             "img": "https://vega.github.io/vega-datasets/data/7zip.png",
-#         },
-#     ]
-# )
-
-# image = alt.Chart(source).mark_image(width=50, height=50).encode(x=alt.value(0.0), y=alt.value(3), url="img")
-
-#st.altair_chart(text, use_container_width=True)
 
 if show_xerr:
     xerrorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
@@ -884,16 +709,6 @@ charts_to_layer.append(base_chart)
 #charts_to_layer.append(filter_chart)
 
 
-# chart2 = alt.Chart(dsph_m31).mark_circle().encode(
-#      x=alt.X(plot_xaxis, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
-#      y=alt.Y(plot_yaxis, scale=alt.Scale(type=type_y, reverse=reverse_y), title=tab_desc[plot_yaxis]['label']),
-#      color=alt.Color('host', scale=alt.Scale(scheme='tableau20'), legend=alt.Legend(title='Host'))
-#      ).interactive()
-#print(charts_to_layer)
-#charts_to_layer = np.concatenate([charts_to_layer, errors_to_layer])
-#print(charts_to_layer.reverse())
-#st.altair_chart(errors_to_layer[0], use_container_width=True)
-
 def plot_dwarf_all():
     #layered = base_chart+xerrorbars
     layered = (alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0)))).project(
@@ -949,6 +764,7 @@ with st.expander("Roadmap"):
             - [ ] Add page to display 3D, interactive map of objects
             - [ ] Add common default plots to swap between
             - [ ] Encode a 3rd data type into color 
+            - [ ] Let user input their own data to overplot
                 """)
     
 
