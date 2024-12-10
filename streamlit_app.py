@@ -117,7 +117,7 @@ def load_data():
             combined_df[key+"_high"] = combined_df[key+"_high"].fillna(0)
         if (key+'_ul' in combined_df.keys()):
             # print(32*np.nanstd(dwarf_all[key]))
-            combined_df[key+"_upper"] = np.ones(len(combined_df[key+'_ul']))*1000*np.nanstd(combined_df[key])
+            combined_df[key+"_upper"] = np.ones(len(combined_df[key+'_ul']))*1000*np.nanstd(combined_df[key+"_ul"])
             combined_df[key+"_upper"] = combined_df[key+"_upper"].fillna(0)
         
         if ("ref" in key):
@@ -132,7 +132,7 @@ def load_data():
             #combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: "https://ui.adsabs.harvard.edu/abs/"+ x[re.search(r'\d+', x).start():] if re.search(r'\d+', x) else "N/A")
             combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: x[-19:]) # bibcodes are strickly 19 characters long so just get the last 19 characters of the ref string
 
-        combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
+        #combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
         #combined_df = combined_df.iloc[::-1]
         # for key in dwarf_all.keys():
@@ -556,18 +556,22 @@ color = alt.when(hover_selection).then(alt.value('black')).otherwise(alt.Color('
 # )
 #print("THEME", theme)
 if theme == None:
+    lineColor = alt.value('black')
     strokeColor = alt.value('black')
     strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
             domain=table_names_pretty, range=range_), title='Source', legend=None))
 elif theme['base'] == 'light':
+    lineColor = alt.value('black')
     strokeColor = alt.value('black')
     strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
             domain=table_names_pretty, range=range_), title='Source', legend=None))
 elif theme['base'] == 'dark':
+    lineColor = alt.value('white')
     strokeColor = alt.value('white')
     strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
             domain=table_names_pretty, range=range_), title='Source', legend=None))
 else:
+    lineColor = alt.value('black')
     strokeColor = alt.value('black')
     strokeErrorCondition=alt.when(hover_selection).then(strokeColor).otherwise(alt.Color('source_pretty:N', scale=alt.Scale(
             domain=table_names_pretty, range=range_), title='Source', legend=None))
@@ -671,7 +675,7 @@ if plot_xaxis == 'M_V' and plot_yaxis == 'metallicity':
     mass_met = alt.Chart(mass_met_data).mark_line().encode(
         x='x',
         y='f(x)',
-        color=alt.value("##FFAA00"),
+        color=lineColor,
         text=alt.value('Mass-Met'),
         tooltip=alt.value('Relation from Simon 2019'),
 
@@ -694,7 +698,7 @@ if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
         const_mu_chart = alt.Chart(const_mu).mark_line().encode(
             x=alt.X('x',scale=alt.Scale(type=type_x, reverse=reverse_x)),
             y=alt.Y('f(x)', scale=alt.Scale(type=type_y, reverse=reverse_y)),
-            color=alt.value("black"),
+            color=lineColor,
             text=alt.value(f'μᵥ = {mu} mag/arcsec²'),
             tooltip=alt.value(f'μᵥ= {mu} mag/arcsec²'),
             
