@@ -176,8 +176,8 @@ def tutorial():
                 
     :three_button_mouse: Click and drag to :blue-background[**pan**] around the plot. 
                 
-    :mag_right: Use your mouse wheel and hold down the 'shift' and 'alt' ('option' on a Mac) keys simultaneously to :blue-background[**zoom**] in and out.
-                You can also zoom only in the x or y directions by using the mouse wheel and holding down the 'alt' or 'shift' keys, respectively.
+    :mag_right: Use your mouse wheel and hold down the 'control' and 'alt' ('option' on a Mac) keys simultaneously to :blue-background[**zoom**] in and out.
+                You can also zoom only in the x or y directions by using the mouse wheel and holding down the 'alt' or 'control' keys, respectively.
                     Note that zooming is only possible for quantitative axes. Double click anywhere on the plot to reset the zoom.
 
     :flying_saucer: :blue-background[**Hover**] over the points to see more information about each object. You can change the information displayed in the tooltip in the sidebar.
@@ -507,7 +507,7 @@ selection_x = alt.selection_interval(
 selection_y = alt.selection_interval(
     bind='scales',
     encodings=["y"],
-    zoom="wheel![event.shiftKey]",
+    zoom="wheel![event.ctrlKey]",
 )
 
 # selection_both = alt.selection_interval(
