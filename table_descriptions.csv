@@ -4,6 +4,7 @@ ra,float64,RA,RA,right ascension ICRS J2000.0,degree,N/A
 dec,float64,Dec,Dec,declination ICRS J2000.0 ,degree,N/A
 name,str,Name,Name,identifier of system,N/A,N/A
 host,str,Host,Host,"host [LVDB key] of system [MW, LMC, M31, etc]",N/A,N/A
+host_pretty,str,Host,Host,"host [LVDB key] of system [MW, LMC, M31, etc]",N/A,N/A
 confirmed_real,int64,Confirmed Real,Confirmed Real,"system has been confirmed with either deeper photometry, follow-up spectroscopy, proper motion, or other methods (not a chance alignment of stars).",N/A,N/A
 confirmed_dwarf,int64,Confirmed Dwarf,Confirmed Dwarf,"system has been confirmed to be dwarf galaxy (or star cluster) based on spectroscopy, and/or deeper photometry.",N/A,N/A
 rhalf,float64,$a_h$,aₕ,major axis of the half-light radius (or plummer radius),arcmin,bibcode_ref_structure

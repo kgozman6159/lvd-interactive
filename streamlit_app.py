@@ -89,11 +89,13 @@ def load_data():
         
         if ("ref" in key):
             combined_df[key] = combined_df[key].fillna("No reference")
-                
-
             #combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: "https://ui.adsabs.harvard.edu/abs/"+ x[re.search(r'\d+', x).start():] if re.search(r'\d+', x) else "N/A")
             combined_df["bibcode_"+key] = combined_df[key].apply(lambda x: x[-19:]) # bibcodes are strickly 19 characters long so just get the last 19 characters of the ref string
 
+        if key == "host":
+                # Map host values to corresponding names in misc_host
+            host_mapping = misc_host.set_index('key')['name'].to_dict()
+            combined_df['host_pretty'] = combined_df['host'].map(host_mapping).fillna(combined_df['host'])
         #combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
 
@@ -163,6 +165,7 @@ def tutorial():
           - Hover over the :material/help: icon next to each property to see an explanation of what it is.
           - Some selected parameters will also let you display error bars for those quantities and/or change the scale of the axis from linear to logarithmic.
           - Arrow markers in the plot indicate that the value is an upper limit.
+        - :red-background[**Axis Limits**] Set the minimum and maximum values for the x- and y-axes.
         - :red-background[**Source**] Filter the data by what type of systems you want to display.
         - :red-background[**Filters**] Filter the data by specific properties.
         - :red-background[**Tooltip**] Select the properties to display in the tooltip. If they are not in the data, they will be displayed as "null".
@@ -219,7 +222,7 @@ tab_desc['reference'] = tab_desc['reference'].replace('N/A', '')
 
 tab_desc = tab_desc.T.to_dict(index='property')
 
-valid_plot_cols = ['ra', 'dec', 'name', 'host', 'confirmed_real', 
+valid_plot_cols = ['ra', 'dec', 'name', "host_pretty", 'confirmed_real', 
                    'confirmed_dwarf', 'rhalf',  'position_angle', 'ellipticity', 
                    'distance_modulus', 'apparent_magnitude_v', 
                    'vlos_systemic', 'vlos_sigma', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
@@ -299,6 +302,31 @@ with st.sidebar:
         type_y, reverse_y, ylabel, channel_y, show_yerr, yref = get_axis_specs(plot_yaxis, 'yaxis')
 
 
+# ---------------------x and y limits---------------------- #
+#st.sidebar.markdown("### Axis Limits")
+with st.sidebar:
+    with st.expander("Set Axis Limits"):
+        x_min, x_max = master_df[plot_xaxis].min(), master_df[plot_xaxis].max()
+        y_min, y_max = master_df[plot_yaxis].min(), master_df[plot_yaxis].max()
+
+        col1, col2 = st.columns(2)
+        with col1:
+            xmin = st.number_input(f"{tab_desc[plot_xaxis]['label']} min", key="xmin", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+            ymin = st.number_input(f"{tab_desc[plot_yaxis]['label']} min", key="ymin", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+
+        with col2:
+            xmax = st.number_input(f"{tab_desc[plot_xaxis]['label']} max", key="xmax", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+            ymax = st.number_input(f"{tab_desc[plot_yaxis]['label']} max", key="ymax", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+
+
+if xmin is None:
+    xmin = x_min
+if xmax is None:
+    xmax = x_max
+if ymin is None:
+    ymin = y_min
+if ymax is None:
+    ymax = y_max
 # ---------------------filtering---------------------- #
 #filter by source
 source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
@@ -380,7 +408,7 @@ st.markdown(string, unsafe_allow_html=True)
 with st.sidebar:
     def tooltip_items():
         tooltip_select = st.multiselect('What properties do you want to display in the tooltip?', valid_plot_cols, 
-                                        default=['name', 'host', plot_xaxis, plot_yaxis], 
+                                        default=['name', 'host_pretty', plot_xaxis, plot_yaxis], 
                                         format_func=lambda x: tab_desc[x]['label'], 
                                         on_change=lambda: st.session_state.update(show_tutorial=False), 
                                         help='Choose what properties are displayed when you hover over a point in the plot. If the property is not in the data, it will be displayed as "null".')
@@ -533,8 +561,8 @@ else:
 
 
 base_chart = alt.Chart(master_df[::-1]).mark_point(filled=True, size=50).encode(
-     x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=xlabel), 
-     y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=ylabel),
+     x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=[xmin, xmax]), title=xlabel), 
+     y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=[ymin, ymax]), title=ylabel),
      color=alt.Color('source_pretty',scale=alt.Scale(domain=table_names_pretty, range=range_), legend=alt.Legend(title='System Type')),
      #opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.05)),
      #opacity=opacity,
@@ -756,6 +784,7 @@ with st.expander("Roadmap"):
             - [ ] Make error bars and upper limits appear on top of other points when hovered over 
             - [ ] Prettify labels for certain properties. Altair doesn't support LaTex, so this may be difficult for now.
             - [x] f_HI broken when displaying logarithmic scale
+            - [x] Add way to set axis limits
                                 
             :green-background[**Features :sparkles:**]
             - [ ] Do something on click of a point (like display a table of properties). Currently unavailable because Streamlit doesn't yet support click events on layered Altair charts.
