@@ -116,8 +116,8 @@ all_source_indices = master_df['source_pretty'].copy().map(source_mapping) # for
 #ALL_SOURCES = master_df['source_pretty_num'].copy()
 #print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len(dsph_lf_distant)+len(gc_ambiguous)+len(gc_mw_new)+len(gc_harris)+len(gc_dwarf_hosted)+len(gc_other)+len(candidate),len(misc_host))
 #st.dataframe(dwarf_all, use_container_width=True) # use_container_width doesn't work??
-st.dataframe(master_df, use_container_width=True)
-print("MIN", (master_df['rhalf_sph_physical']).min())
+#st.dataframe(master_df, use_container_width=True)
+#print("MIN", (master_df['rhalf_sph_physical']).min())
 
 theme = st_theme()
 #print(theme)
