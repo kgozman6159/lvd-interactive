@@ -116,7 +116,8 @@ all_source_indices = master_df['source_pretty'].copy().map(source_mapping) # for
 #ALL_SOURCES = master_df['source_pretty_num'].copy()
 #print(len(dwarf_all),len(master_df), len(dsph_mw)+len(dsph_m31)+len(dsph_lf)+len(dsph_lf_distant)+len(gc_ambiguous)+len(gc_mw_new)+len(gc_harris)+len(gc_dwarf_hosted)+len(gc_other)+len(candidate),len(misc_host))
 #st.dataframe(dwarf_all, use_container_width=True) # use_container_width doesn't work??
-#st.dataframe(master_df, use_container_width=True)
+st.dataframe(master_df, use_container_width=True)
+print("MIN", (master_df['rhalf_sph_physical']).min())
 
 theme = st_theme()
 #print(theme)
@@ -312,6 +313,7 @@ xdom, ydom = None, None
 with st.sidebar:
     with st.expander("Set Axis Limits"):
         print(tab_desc[plot_xaxis]['dtype'], tab_desc[plot_yaxis]['dtype'])
+        print(plot_xaxis)
         if tab_desc[plot_xaxis]['dtype'] != 'str':
             x_min, x_max = master_df[plot_xaxis].min(), master_df[plot_xaxis].max()
         else:
@@ -327,7 +329,7 @@ with st.sidebar:
         col1, col2 = st.columns(2)
   
         if tab_desc[plot_xaxis]['dtype'] != 'str':
-            xmin = col1.number_input(f"{tab_desc[plot_xaxis]['label']} min", max_value=x_max, key="xmin", value="min", placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+            xmin = col1.number_input(f"{tab_desc[plot_xaxis]['label']} min", max_value=x_max, key="xmin", value=x_min, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
         if tab_desc[plot_yaxis]['dtype'] != 'str':
             ymin = col1.number_input(f"{tab_desc[plot_yaxis]['label']} min", max_value=y_max, key="ymin", value=y_min, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
 
