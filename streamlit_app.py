@@ -22,7 +22,7 @@ st.set_page_config(layout="wide",
     menu_items={
     'Report a bug': "https://github.com/kgozman6159/lvd-interactive/issues",
     'About': """Made with :heart: by Katya Gozman using Streamlit :streamlit:, python, Altair, and Pandas. 
-    If you have any feature requests or find any bugs, please report them on the GitHub page or email me at kgozman [at] umich [dot] edu!
+    If you have any feature requests or find any bugs, please report them on the [GitHub](https://github.com/kgozman6159/lvd-interactive/issues) page or email me at kgozman [at] umich [dot] edu!
     """
   }
 
@@ -96,6 +96,9 @@ def load_data():
                 # Map host values to corresponding names in misc_host
             host_mapping = misc_host.set_index('key')['name'].to_dict()
             combined_df['host_pretty'] = combined_df['host'].map(host_mapping).fillna(combined_df['host'])
+            combined_df['host_pretty'] = combined_df['host_pretty'].fillna('Isolated')
+        if key == 'metallicity_type':
+            combined_df['metallicity_type'] = combined_df['metallicity_type'].fillna("None")
         #combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
 
@@ -304,21 +307,36 @@ with st.sidebar:
 
 # ---------------------x and y limits---------------------- #
 #st.sidebar.markdown("### Axis Limits")
+xmin, xmax, ymin, ymax = None, None, None, None
+xdom, ydom = None, None
 with st.sidebar:
     with st.expander("Set Axis Limits"):
-        x_min, x_max = master_df[plot_xaxis].min(), master_df[plot_xaxis].max()
-        y_min, y_max = master_df[plot_yaxis].min(), master_df[plot_yaxis].max()
+        print(tab_desc[plot_xaxis]['dtype'], tab_desc[plot_yaxis]['dtype'])
+        if tab_desc[plot_xaxis]['dtype'] != 'str':
+            x_min, x_max = master_df[plot_xaxis].min(), master_df[plot_xaxis].max()
+        else:
+            x_min, x_max = None, None
+            xdom = master_df[plot_xaxis].unique()
+        if tab_desc[plot_yaxis]['dtype'] != 'str':
+            y_min, y_max = master_df[plot_yaxis].min(), master_df[plot_yaxis].max()
+        else:
+            y_min, y_max = None, None
+            ydom = master_df[plot_yaxis].unique()
+
 
         col1, col2 = st.columns(2)
-        with col1:
-            xmin = st.number_input(f"{tab_desc[plot_xaxis]['label']} min", key="xmin", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
-            ymin = st.number_input(f"{tab_desc[plot_yaxis]['label']} min", key="ymin", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+  
+        if tab_desc[plot_xaxis]['dtype'] != 'str':
+            xmin = col1.number_input(f"{tab_desc[plot_xaxis]['label']} min", max_value=x_max, key="xmin", value="min", placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+        if tab_desc[plot_yaxis]['dtype'] != 'str':
+            ymin = col1.number_input(f"{tab_desc[plot_yaxis]['label']} min", max_value=y_max, key="ymin", value=y_min, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
 
-        with col2:
-            xmax = st.number_input(f"{tab_desc[plot_xaxis]['label']} max", key="xmax", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
-            ymax = st.number_input(f"{tab_desc[plot_yaxis]['label']} max", key="ymax", value=None, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+        if tab_desc[plot_xaxis]['dtype'] != 'str':
+            xmax = col2.number_input(f"{tab_desc[plot_xaxis]['label']} max", min_value=x_min, key="xmax", value=x_max, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+        if tab_desc[plot_yaxis]['dtype'] != 'str':
+            ymax = col2.number_input(f"{tab_desc[plot_yaxis]['label']} max",min_value=y_min, key="ymax", value=y_max, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
 
-
+print(xmin, xmax, ymin, ymax)
 if xmin is None:
     xmin = x_min
 if xmax is None:
@@ -327,6 +345,15 @@ if ymin is None:
     ymin = y_min
 if ymax is None:
     ymax = y_max
+
+print(xdom)
+
+if xdom is None:
+    xdom = [xmin, xmax]
+if ydom is None:
+    ydom = [ymin, ymax]
+
+print(xdom, ydom)
 # ---------------------filtering---------------------- #
 #filter by source
 source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
@@ -567,8 +594,8 @@ else:
 
 
 base_chart = alt.Chart(master_df[::-1]).mark_point(filled=True, size=50).encode(
-     x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=[xmin, xmax]), title=xlabel), 
-     y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=[ymin, ymax]), title=ylabel),
+     x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=xlabel), 
+     y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=ylabel),
      color=alt.Color('source_pretty',scale=alt.Scale(domain=table_names_pretty, range=range_), legend=legend),
      #opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.05)),
      #opacity=opacity,
@@ -623,8 +650,8 @@ if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
 
 if show_xerr:
     xerrorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
-        x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
-        y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=""),
+        y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=""),
         x2=alt.X2(plot_xaxis+"_high", title=""),
         size=alt.value(500),
         #stroke=alt.value('black'),
@@ -642,8 +669,8 @@ if show_xerr:
 
     if plot_yaxis+"_ul" in master_df.keys():
         xup_errorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
-            x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
-            y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+            x=alt.X(plot_xaxis+"_low", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=""),
+            y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=""),
             x2=alt.X2(plot_xaxis+"_high", title=""),
             size=alt.value(500),
             #stroke=alt.value('black'),
@@ -660,8 +687,8 @@ if show_xerr:
 
 if show_yerr:
     yerrorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
-        x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
-        y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=""), 
+        y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=""),
         y2=alt.Y2(plot_yaxis+"_high", title=""),
         # yError=alt.YError(plot_yaxis + '_low'),
         # yError2=alt.YError(plot_yaxis + '_high')
@@ -681,8 +708,8 @@ if show_yerr:
 
     if plot_xaxis+"_ul" in master_df.keys():
         yup_errorbars = alt.Chart(master_df[::-1]).mark_errorbar(ticks=True).encode(
-            x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""), 
-            y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+            x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=""), 
+            y=alt.Y(plot_yaxis+"_low", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=""),
             y2=alt.Y2(plot_yaxis+"_high", title=""),
             size=alt.value(500),
             #stroke=alt.value('black'),
@@ -702,8 +729,8 @@ if plot_yaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_yaxis+"_ul", title=tab_desc[plot_yaxis+"_ul"]['label']))
 
     yul = alt.Chart(master_df[::-1]).mark_point(shape="arrow", filled=True, strokeWidth=10).encode(
-        x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
-        y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=""),
+        y=alt.Y(plot_yaxis+"_ul", type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=""),
         #y2=alt.Y2(plot_yaxis+"_upper"),
         color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, range=range_), title='Source', legend=None),
         tooltip=tooltip,
@@ -723,8 +750,8 @@ if plot_xaxis+"_ul" in master_df.keys():
     tooltip.append(alt.Tooltip(plot_xaxis+"_ul", title=tab_desc[plot_xaxis+"_ul"]['label']))
 
     xul = alt.Chart(master_df[::-1]).mark_point(shape="arrow", filled=True).encode(
-        x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x), title=""),
-        y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y), title=""),
+        x=alt.X(plot_xaxis+"_ul", type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=""),
+        y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=""),
         size=alt.value(500),
         color=alt.Color('source_pretty', scale=alt.Scale(domain=table_names_pretty, range=range_), title='Source', legend=None),
         tooltip=tooltip,
@@ -802,9 +829,9 @@ with st.expander("Roadmap"):
                 """)
     
 
-st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)! This app uses data from Release %s"%release)
+st.markdown("Check out the data on [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/apace7/local_volume_database)! This app uses data from Release %s and has been compiled by Andrew Pace."%release)
 st.markdown("Look at the documentation on [![readthedocs](https://img.shields.io/badge/readthedocs-ffffff?logo=readthedocs&style=flat&color=ffffff&logoColor=8CA1AF)](https://local-volume-database.readthedocs.io/en/latest/index.html)")
-st.markdown("Read the paper on [![arXiv](https://img.shields.io/badge/arXiv-ffffff?logo=arxiv&style=flat&color=ffffff&logoColor=B31B1B)](https://arxiv.org/abs/2411.07424)")
+st.markdown("Read the Pace 2024 paper on [![arXiv](https://img.shields.io/badge/arXiv-ffffff?logo=arxiv&style=flat&color=ffffff&logoColor=B31B1B)](https://arxiv.org/abs/2411.07424)")
 st.divider()
 with st.container():
 
