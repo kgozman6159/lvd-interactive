@@ -559,11 +559,17 @@ if len(selected_gals)!=0:
 else:
     opacity = alt.value(1)
 
+show_legend = st.checkbox('Show legend', value=True, on_change=lambda: st.session_state.update(show_tutorial=False))
+if show_legend:
+    legend = alt.Legend(title='System Type')
+else:
+    legend = None
+
 
 base_chart = alt.Chart(master_df[::-1]).mark_point(filled=True, size=50).encode(
      x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=[xmin, xmax]), title=xlabel), 
      y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=[ymin, ymax]), title=ylabel),
-     color=alt.Color('source_pretty',scale=alt.Scale(domain=table_names_pretty, range=range_), legend=alt.Legend(title='System Type')),
+     color=alt.Color('source_pretty',scale=alt.Scale(domain=table_names_pretty, range=range_), legend=legend),
      #opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.05)),
      #opacity=opacity,
      tooltip = tooltip,
@@ -573,7 +579,7 @@ base_chart = alt.Chart(master_df[::-1]).mark_point(filled=True, size=50).encode(
      #order=alt.value(0),
      #href=alt.when(alt.FieldOneOfPredicate(field=xref, oneOf=[0,1])).then(alt.Href("www.google.com:N")).otherwise(xref),
      #size=alt.when(selection).then(alt.value(100)).otherwise(alt.value(0)),
-     shape=alt.Shape('source_pretty', scale=alt.Scale(domain=table_names_pretty), legend=alt.Legend(title='System Type')),
+     shape=alt.Shape('source_pretty', scale=alt.Scale(domain=table_names_pretty), legend=legend),
      #order=alt.Order('source_pretty'),
      ).add_params(selection_click, hover_selection, selection_x, selection_y)#.transform_filter(selection)
 
@@ -739,8 +745,7 @@ charts_to_layer.append(base_chart)
 
 def plot_dwarf_all():
     #layered = base_chart+xerrorbars
-    layered = (alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0)))).project(
-    type=alt.expr('orthographic')).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
+    layered = (alt.layer(*charts_to_layer).encode(opacity=opacity, order=when_hover.then(alt.value(1)).otherwise(alt.value(0)))).configure_legend(titleFontSize=18,labelFontSize=10).resolve_scale(shape='independent', color='independent').resolve_legend(color='independent', size='independent').configure_legend(symbolStrokeWidth=0)
     #print(layered.to_json())
     #print("@#&@*(#@(#)@)*#@#@")
     
