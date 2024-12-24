@@ -69,8 +69,9 @@ def load_data():
     # Combine all tables except dwarf_all into one big dataframe
     #tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
     combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
-    combined_df = combined_df[combined_df['table'] != 'misc']
     misc_host = combined_df[combined_df['table'] == 'misc']
+    combined_df = combined_df[combined_df['table'] != 'misc']
+    
     #combined_df['source_pretty'] = combined_df['table'].map(dict(zip(table_names, table_names_pretty)))
     #combined_df = pd.concat([combined_df.assign(source=name, source_pretty=name_pretty) for name, name_pretty in zip(table_names, table_names_pretty)], ignore_index=True)
     #combined_df = pd.concat([table.assign(source=name, source_pretty=name_pretty) for table, name, name_pretty in zip(tables, table_names, table_names_pretty)], ignore_index=True)
@@ -104,7 +105,9 @@ def load_data():
 
         if key == "host":
                 # Map host values to corresponding names in misc_host
+            print(misc_host)
             host_mapping = misc_host.set_index('key')['name'].to_dict()
+            print("@#*(@#@", host_mapping)
             combined_df['host_pretty'] = combined_df['host'].map(host_mapping).fillna(combined_df['host'])
             combined_df['host_pretty'] = combined_df['host_pretty'].fillna('Isolated')
 
