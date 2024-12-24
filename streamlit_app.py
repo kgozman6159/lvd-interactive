@@ -37,25 +37,26 @@ from streamlit_theme import st_theme
 #import streamlit.components.v1 as components
 
 
-table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
+#table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
+table_names = ['dwarf_mw', 'dwarf_m31', 'dwarf_local_field', 'dwarf_local_field_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
-release = 'v1.0.0'
+release = 'v1.0.2'
 # ---------------------load data---------------------- #
 @st.cache_data
 def load_data():
     
     # loads versions from latest github release
-    dwarf_all = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_all.csv'%release)
-    dsph_mw = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_mw.csv'%release)
-    dsph_m31 = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_m31.csv'%release)
-    dsph_lf = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_local_field.csv'%release)
-    dsph_lf_distant = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_local_field_distant.csv'%release)
-    gc_ambiguous = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_ambiguous.csv'%release)
-    gc_mw_new = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_mw_new.csv'%release)
-    gc_harris = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_harris.csv'%release)
-    gc_dwarf_hosted = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_dwarf_hosted.csv'%release)
-    gc_other = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_other.csv'%release)
-    candidate = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/candidate.csv'%release)
+    # dwarf_all = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_all.csv'%release)
+    # dsph_mw = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_mw.csv'%release)
+    # dsph_m31 = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_m31.csv'%release)
+    # dsph_lf = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_local_field.csv'%release)
+    # dsph_lf_distant = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_local_field_distant.csv'%release)
+    # gc_ambiguous = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_ambiguous.csv'%release)
+    # gc_mw_new = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_mw_new.csv'%release)
+    # gc_harris = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_harris.csv'%release)
+    # gc_dwarf_hosted = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_dwarf_hosted.csv'%release)
+    # gc_other = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_other.csv'%release)
+    # candidate = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/candidate.csv'%release)
     misc_host = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/misc_host.csv'%release)
 
     # ----don't know if I need thes below since dsph_mw already has columns for the wolf dynamical mass and HI mass UL which are very similar ----#
@@ -66,10 +67,18 @@ def load_data():
     #dsph_mw['mass_HI_ul'] = (235600*dsph_mw['flux_HI_ul']*(dsph_mw['distance']/1000.)**2) # this is just the 10**x version of the mass_HI_ul column in dwarf_all
     #comb['mass_HI_ul'] = np.log10(235600*comb['flux_HI_ul']*(comb['distance']/1000.)**2)
     # Combine all tables except dwarf_all into one big dataframe
-    tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
-    combined_df = pd.concat([table.assign(source=name, source_pretty=name_pretty) for table, name, name_pretty in zip(tables, table_names, table_names_pretty)], ignore_index=True)
+    #tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
+    combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
+    combined_df = combined_df[combined_df['table'] != 'misc']
+    #combined_df['source_pretty'] = combined_df['table'].map(dict(zip(table_names, table_names_pretty)))
+    #combined_df = pd.concat([combined_df.assign(source=name, source_pretty=name_pretty) for name, name_pretty in zip(table_names, table_names_pretty)], ignore_index=True)
+    #combined_df = pd.concat([table.assign(source=name, source_pretty=name_pretty) for table, name, name_pretty in zip(tables, table_names, table_names_pretty)], ignore_index=True)
 
     for key in combined_df.keys():
+        if key == "table":
+            combined_df['source_pretty'] = combined_df['table'].map(dict(zip(table_names, table_names_pretty)))
+
+
         if (key+'_em' in combined_df.keys()):
             combined_df[key+"_low"] = combined_df[key]-combined_df[key+'_em']
             combined_df[key+"_low"] = combined_df[key+"_low"].fillna(0)
@@ -97,15 +106,25 @@ def load_data():
             host_mapping = misc_host.set_index('key')['name'].to_dict()
             combined_df['host_pretty'] = combined_df['host'].map(host_mapping).fillna(combined_df['host'])
             combined_df['host_pretty'] = combined_df['host_pretty'].fillna('Isolated')
+
+        if key == "distance_host":
+            combined_df[key] = combined_df[key].replace(0, np.nan)
+        
+
         if key == 'metallicity_type':
             combined_df['metallicity_type'] = combined_df['metallicity_type'].fillna("None")
         #combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
 
 
-    return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
+    # return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
+    return misc_host, combined_df
 
-dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, master_df = load_data()
+#dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, master_df = load_data()
+misc_host, master_df = load_data()
 
+#print(master_df.iloc[np.where(master_df['distance_host'] == 0)])
+
+#st.dataframe(master_df, use_container_width=True)
 # ---------get info about master_df before filtering--------- #
 TOTAL_NUM_SYSTEMS = len(master_df)
 ALL_SYSTEM_NAMES = master_df['name'].unique()
@@ -227,15 +246,12 @@ tab_desc['reference'] = tab_desc['reference'].replace('N/A', '')
 tab_desc = tab_desc.T.to_dict(index='property')
 
 valid_plot_cols = ['ra', 'dec', 'name', "host_pretty", 'confirmed_real', 
-                   'confirmed_dwarf', 'rhalf',  'position_angle', 'ellipticity', 
-                   'distance_modulus', 'apparent_magnitude_v', 
-                   'vlos_systemic', 'vlos_sigma', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
-                'metallicity_spectroscopic_sigma', 'rcore', 'rking', 'rad_sersic', 
-                'n_sersic', 'age', 'metallicity_isochrone', 'flux_HI', 'metallicity_photometric', 
-                'metallicity_photometric_sigma',  'M_V', 'mass_stellar', 'distance',
+                   'confirmed_dwarf', 'rhalf', 'rhalf_physical', 'rhalf_sph_physical', 'position_angle', 'ellipticity', 
+                    'apparent_magnitude_v', 'M_V', 'mass_stellar', 'vlos_systemic', 'vlos_sigma', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
+                'metallicity_spectroscopic_sigma', 'metallicity_isochrone',  'metallicity_photometric', 'metallicity_photometric_sigma', 
+                'metallicity', 'metallicity_type','rcore', 'rking', 'rad_sersic', 'n_sersic', 'age',  'flux_HI', 'distance', 'distance_modulus',
                 'll', 'bb', 'sg_xx', 'sg_yy', 'sg_zz', 'distance_gc', 'distance_m31', 'distance_lg', 'distance_host', 
-                'mass_HI', 'metallicity', 'metallicity_type', 'velocity_gsr', 'velocity_lg', 
-                'mass_dynamical_wolf', 'rhalf_physical', 'rhalf_sph_physical', 'surface_brightness_rhalf']
+                'mass_HI',  'velocity_gsr', 'velocity_lg', 'mass_dynamical_wolf',  'surface_brightness_rhalf']
 
 # ---------------------misc. functions---------------------- #
 # ------ M_V <-> L_V ------ #
@@ -819,6 +835,7 @@ with st.expander("Roadmap"):
             - [ ] Prettify labels for certain properties. Altair doesn't support LaTex, so this may be difficult for now.
             - [x] f_HI broken when displaying logarithmic scale
             - [x] Add way to set axis limits
+            - [x] Fix bug that wouldn't let you plot D_host in log scale
                                 
             :green-background[**Features :sparkles:**]
             - [ ] Do something on click of a point (like display a table of properties). Currently unavailable because Streamlit doesn't yet support click events on layered Altair charts.
