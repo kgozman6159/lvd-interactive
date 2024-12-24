@@ -57,7 +57,7 @@ def load_data():
     # gc_dwarf_hosted = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_dwarf_hosted.csv'%release)
     # gc_other = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/gc_other.csv'%release)
     # candidate = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/candidate.csv'%release)
-    misc_host = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/misc_host.csv'%release)
+    #misc_host = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/misc_host.csv'%release)
 
     # ----don't know if I need thes below since dsph_mw already has columns for the wolf dynamical mass and HI mass UL which are very similar ----#
 
@@ -70,6 +70,7 @@ def load_data():
     #tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
     combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
     combined_df = combined_df[combined_df['table'] != 'misc']
+    misc_host = combined_df[combined_df['table'] == 'misc']
     #combined_df['source_pretty'] = combined_df['table'].map(dict(zip(table_names, table_names_pretty)))
     #combined_df = pd.concat([combined_df.assign(source=name, source_pretty=name_pretty) for name, name_pretty in zip(table_names, table_names_pretty)], ignore_index=True)
     #combined_df = pd.concat([table.assign(source=name, source_pretty=name_pretty) for table, name, name_pretty in zip(tables, table_names, table_names_pretty)], ignore_index=True)
