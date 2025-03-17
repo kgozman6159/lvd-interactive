@@ -40,7 +40,8 @@ from streamlit_theme import st_theme
 #table_names = ['dsph_mw', 'dsph_m31', 'dsph_lf', 'dsph_lf_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names = ['dwarf_mw', 'dwarf_m31', 'dwarf_local_field', 'dwarf_local_field_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
-release = 'v1.0.3'
+#release = 'v1.0.3'
+release = table.Table.read('https://raw.githubusercontent.com/apace7/local_volume_database/main/code/release_version.txt', format='ascii.fast_no_header')['col1'][0]
 # ---------------------load data---------------------- #
 @st.cache_data
 def load_data():
@@ -68,7 +69,9 @@ def load_data():
     #comb['mass_HI_ul'] = np.log10(235600*comb['flux_HI_ul']*(comb['distance']/1000.)**2)
     # Combine all tables except dwarf_all into one big dataframe
     #tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
+    #combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
     combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
+
     misc_host = combined_df[combined_df['table'] == 'misc']
     combined_df = combined_df[combined_df['table'] != 'misc']
     
