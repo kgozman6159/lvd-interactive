@@ -87,7 +87,7 @@ ref_metallicity_photometric,str,,,,N/A,N/A
 M_V,float64,Mv,Mv,"absolute V-band magnitude, computed from distance modulus and V-band apparent magnitude",N/A,N/A
 M_V_em,float64,,,,N/A,N/A
 M_V_ep,float64,,,,N/A,N/A
-mass_stellar,float64,M_\odot,Stellar Mass,log10 stellar mass assuming M/L=2 and computed from M_V,log10 Msun,N/A
+mass_stellar,float64,M_\odot,Stellar Mass,stellar mass assuming M/L=2 and computed from M_V,Msun,N/A
 distance,float64,D_{\odot},D_⊙,"heliocentric distance, computed from distance modulus",kpc,N/A
 distance_em,float64,,,,N/A,N/A
 distance_ep,float64,,,,N/A,N/A
@@ -100,7 +100,7 @@ distance_gc,float64,D_{GC},D_{GC},3D distance to Galactic center,kpc,N/A
 distance_m31,float64,D_{M31},D_{M31},3D distance to M31 center,kpc,N/A
 distance_lg,float64,D_{LG},D_{LG},3D distance to Local Group center,kpc,N/A
 distance_host,float64,D_{Host},D_{Host},3D distance to host galaxy,kpc,N/A
-mass_HI,float64,M_{HI},M_{HI},log10 HI mass computed from HI flux and distance,log10 Msun,N/A
+mass_HI,float64,M_{HI},M_{HI},HI mass computed from HI flux and distance,Msun,N/A
 mass_HI_ul,float64,,,,N/A,N/A
 metallicity,float64,[Fe/H],[Fe/H],"union of spectroscopic, photometric, and isochrone, spectroscopic preferred over photometric metallicity, and photometric over isochrone",N/A,N/A
 metallicity_em,float64,,,,N/A,N/A
@@ -108,7 +108,7 @@ metallicity_ep,float64,,,,N/A,N/A
 metallicity_type,str,,Metallicity Type,"lists whether metallicity column is photometric, isochrone or spectroscopic.",N/A,N/A
 velocity_gsr,float64,,Velocity rel. to Galactic standard,Velocity in Galactic standard of rest frame,km/s,N/A
 velocity_lg,float64,,Velocity rel. to LG,Velocity of system relative to the Local Group centroid,km/s,N/A
-mass_dynamical_wolf,float64,M_{dyn},Dynamical Mass (Wolf),Dynamical mass within 3D half-light radius using the dynamical mass estimator in Wolf et al. 2010,log10 Msun,N/A
+mass_dynamical_wolf,float64,M_{dyn},Dynamical Mass (Wolf),Dynamical mass within 3D half-light radius using the dynamical mass estimator in Wolf et al. 2010,Msun,N/A
 mass_dynamical_wolf_em,float64,,,,N/A,N/A
 mass_dynamical_wolf_ep,float64,,,,N/A,N/A
 mass_dynamical_wolf_ul,float64,,,,N/A,N/A

@@ -83,6 +83,8 @@ def load_data():
         if key == "table":
             combined_df['source_pretty'] = combined_df['table'].map(dict(zip(table_names, table_names_pretty)))
 
+        if key == 'mass_stellar' or key == 'mass_HI' or key == 'mass_HI_ul':
+            combined_df[key] = 10**combined_df[key]
 
         if (key+'_em' in combined_df.keys()):
             combined_df[key+"_low"] = combined_df[key]-combined_df[key+'_em']
@@ -121,6 +123,10 @@ def load_data():
         if key == 'metallicity_type':
             combined_df['metallicity_type'] = combined_df['metallicity_type'].fillna("None")
         #combined_df['image'] = r"https://vega.github.io/vega-datasets/data/ffox.png"
+
+
+
+
 
 
     # return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
@@ -279,7 +285,7 @@ def get_axis_specs(axis, key):
     type_axis = 'linear'
     reverse_axis = False
     label = tab_desc[axis]['label']
-    if tab_desc[axis]['dtype'] in ['float64'] and axis not in ['ra', 'dec']:
+    if tab_desc[axis]['dtype'] in ['float64'] and axis not in ['ra', 'dec', 'll']:
         if not (master_df[axis] <= 0).any():
             type_axis = st.segmented_control(label + ' scale', ['linear', 'log'], default='linear', key=key)
     if tab_desc[axis]['dtype'] in ['float64']:
@@ -307,7 +313,13 @@ def get_axis_specs(axis, key):
     else:
         ref = 'confirmed_real'
 
-    return type_axis, reverse_axis, axis_label, channel, show_error, ref
+    if axis in ['mass_stellar', 'mass_HI', 'mass_dynamical_wolf']:
+        num_format = '.1e'
+    
+    else:
+        num_format = ""
+
+    return type_axis, reverse_axis, axis_label, channel, show_error, ref, num_format
 
 # ---------------------sidebar---------------------- #
 
@@ -322,11 +334,11 @@ with st.sidebar:
     with st.container(border=True, key='xcont') as xcont:
         plot_xaxis = st.selectbox('x-axis', valid_plot_cols, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}", on_change=lambda: st.session_state.update(show_tutorial=False))
         #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
-        type_x, reverse_x, xlabel, channel_x, show_xerr, xref = get_axis_specs(plot_xaxis, 'xaxis')
+        type_x, reverse_x, xlabel, channel_x, show_xerr, xref, xformat = get_axis_specs(plot_xaxis, 'xaxis')
     with st.container(border=True, key='ycont') as ycont:
         plot_yaxis = st.selectbox('y-axis', valid_plot_cols, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}", on_change=lambda: st.session_state.update(show_tutorial=False))
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
-        type_y, reverse_y, ylabel, channel_y, show_yerr, yref = get_axis_specs(plot_yaxis, 'yaxis')
+        type_y, reverse_y, ylabel, channel_y, show_yerr, yref, yformat = get_axis_specs(plot_yaxis, 'yaxis')
 
 
 # ---------------------x and y limits---------------------- #
@@ -619,8 +631,8 @@ else:
 
 
 base_chart = alt.Chart(master_df[::-1]).mark_point(filled=True, size=50).encode(
-     x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=xlabel), 
-     y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=ylabel),
+     x=alt.X(plot_xaxis, type=channel_x, scale=alt.Scale(type=type_x, reverse=reverse_x, domain=xdom), title=xlabel, axis=alt.Axis(format=xformat)), 
+     y=alt.Y(plot_yaxis, type=channel_y, scale=alt.Scale(type=type_y, reverse=reverse_y, domain=ydom), title=ylabel, axis=alt.Axis(format=yformat)),
      color=alt.Color('source_pretty',scale=alt.Scale(domain=table_names_pretty, range=range_), legend=legend),
      #opacity=alt.when(brush).then(alt.value(1)).otherwise(alt.value(0.05)),
      #opacity=opacity,
