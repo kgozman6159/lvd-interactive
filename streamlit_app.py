@@ -331,6 +331,7 @@ if "my_key2" not in st.session_state:
 st.session_state.my_key1=st.session_state.my_key1
 st.session_state.my_key2=st.session_state.my_key2
 with st.sidebar:
+
     with st.container(border=True, key='xcont') as xcont:
         plot_xaxis = st.selectbox('x-axis', valid_plot_cols, key="my_key1", format_func=lambda x: tab_desc[x]['label'], label_visibility='visible', help=f"{tab_desc[st.session_state.my_key1]['desc']}", on_change=lambda: st.session_state.update(show_tutorial=False))
         #right.caption("---", help=tab_desc[plot_xaxis]['desc'])
@@ -339,8 +340,18 @@ with st.sidebar:
         plot_yaxis = st.selectbox('y-axis', valid_plot_cols, key="my_key2", format_func=lambda x: tab_desc[x]['label'], help=f"{tab_desc[st.session_state.my_key2]['desc']}", on_change=lambda: st.session_state.update(show_tutorial=False))
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr, yref, yformat = get_axis_specs(plot_yaxis, 'yaxis')
+    
+    reverse_axes = st.checkbox("Reverse x and y axes", value=False, on_change=lambda: st.session_state.update(show_tutorial=False))
 
-
+    if reverse_axes:
+        plot_xaxis, plot_yaxis = plot_yaxis, plot_xaxis
+        type_x, type_y = type_y, type_x
+        reverse_x, reverse_y = reverse_y, reverse_x
+        xlabel, ylabel = ylabel, xlabel
+        channel_x, channel_y = channel_y, channel_x
+        show_xerr, show_yerr = show_yerr, show_xerr
+        xref, yref = yref, xref
+        xformat, yformat = yformat, xformat
 # ---------------------x and y limits---------------------- #
 #st.sidebar.markdown("### Axis Limits")
 xmin, xmax, ymin, ymax = None, None, None, None
@@ -848,7 +859,7 @@ with st.expander("Roadmap"):
 
             :red-background[**Bug Fixes :beetle:**] 
             - [ ] Filtering by properties currently doesn't display upper limits
-            - [ ] Fix some tick labels for properties that need scientific notation (like for dynamical mass)
+            - [x] Fix some tick labels for properties that need scientific notation (like for dynamical mass)
             - [ ] Prettify labels of host galaxies in the tooltip and filter
             - [ ] Make error bars and upper limits appear on top of other points when hovered over 
             - [ ] Prettify labels for certain properties. Altair doesn't support LaTex, so this may be difficult for now.
