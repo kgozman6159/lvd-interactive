@@ -69,7 +69,7 @@ def load_data():
     #comb['mass_HI_ul'] = np.log10(235600*comb['flux_HI_ul']*(comb['distance']/1000.)**2)
     # Combine all tables except dwarf_all into one big dataframe
     #tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
-    #combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
+    #combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.2/comb_all.csv')#%release)
     combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
 
     misc_host = combined_df[combined_df['table'] == 'misc']
@@ -356,6 +356,47 @@ if reverse_axes:
     xref, yref = yref, xref
     xformat, yformat = yformat, xformat    
 
+
+# ---------------------filtering---------------------- #
+#filter by source
+source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
+if source:
+    master_df = master_df[master_df['source_pretty'].isin(source)]
+print('source', source)
+
+# ---------------------filtering by columns---------------------- #
+with st.sidebar:
+    with st.expander("Filtering"):
+        st.markdown("### Filters")
+        filter_container = st.container()
+        filter_container.markdown("Add filters for different parameters:")
+        filter_columns = st.multiselect('Select parameters to filter by', valid_plot_cols, format_func=lambda x: tab_desc[x]['label'], key="filter_columns", on_change=lambda: st.session_state.update(show_tutorial=False))
+
+        
+        filter_values = {}
+        for col in filter_columns:
+            if tab_desc[col]["unit"] == "N/A":
+                label = f'{tab_desc[col]["label"]}'
+            else:
+                #label = f'({tab_desc[col]["unit"]})'
+                label = f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})'
+            if tab_desc[col]['dtype'] == 'float64' or tab_desc[col]['dtype'] == 'int64':
+                min_val, max_val = master_df[col].min(), master_df[col].max()
+                filter_values[col] = filter_container.slider(label, min_val, max_val, (min_val, max_val), step=0.1, on_change=lambda: st.session_state.update(show_tutorial=False))
+                #filter_values[col] = filter_container.select_slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', sorted(master_df[col]), (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
+
+            else:
+                unique_vals = master_df[col].unique()
+                filter_values[col] = filter_container.multiselect(f'{tab_desc[col]["label"]}', unique_vals, on_change=lambda: st.session_state.update(show_tutorial=False))
+
+
+        for col, val in filter_values.items():
+            if isinstance(val, tuple):
+                master_df = master_df[(master_df[col] >= val[0]) & (master_df[col] <= val[1])]
+            else:
+                master_df = master_df[master_df[col].isin(val)]
+
+
 # ---------------------x and y limits---------------------- #
 #st.sidebar.markdown("### Axis Limits")
 xmin, xmax, ymin, ymax = None, None, None, None
@@ -408,50 +449,8 @@ if xdom is None:
     xdom = [xmin, xmax]
 if ydom is None:
     ydom = [ymin, ymax]
-
+print(len(xdom), len(ydom))
 print("xdom, ydom", xdom, ydom, xdom[0], ydom[0])
-
-# if reverse_axes:
-#     xmin, xmax, ymin, ymax = ymin, ymax, xmin, xmax
-#     xdom, ydom = ydom, xdom
-# ---------------------filtering---------------------- #
-#filter by source
-source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
-if source:
-    master_df = master_df[master_df['source_pretty'].isin(source)]
-print(source)
-
-# ---------------------filtering by columns---------------------- #
-with st.sidebar:
-    with st.expander("Filtering"):
-        st.markdown("### Filters")
-        filter_container = st.container()
-        filter_container.markdown("Add filters for different parameters:")
-        filter_columns = st.multiselect('Select parameters to filter by', valid_plot_cols, format_func=lambda x: tab_desc[x]['label'], key="filter_columns", on_change=lambda: st.session_state.update(show_tutorial=False))
-
-        
-        filter_values = {}
-        for col in filter_columns:
-            if tab_desc[col]["unit"] == "N/A":
-                label = f'{tab_desc[col]["label"]}'
-            else:
-                #label = f'({tab_desc[col]["unit"]})'
-                label = f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})'
-            if tab_desc[col]['dtype'] == 'float64' or tab_desc[col]['dtype'] == 'int64':
-                min_val, max_val = master_df[col].min(), master_df[col].max()
-                filter_values[col] = filter_container.slider(label, min_val, max_val, (min_val, max_val), step=0.1, on_change=lambda: st.session_state.update(show_tutorial=False))
-                #filter_values[col] = filter_container.select_slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', sorted(master_df[col]), (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
-
-            else:
-                unique_vals = master_df[col].unique()
-                filter_values[col] = filter_container.multiselect(f'{tab_desc[col]["label"]}', unique_vals, on_change=lambda: st.session_state.update(show_tutorial=False))
-
-
-        for col, val in filter_values.items():
-            if isinstance(val, tuple):
-                master_df = master_df[(master_df[col] >= val[0]) & (master_df[col] <= val[1])]
-            else:
-                master_df = master_df[master_df[col].isin(val)]
 
 
 #---------------------user select color for each source----------------------#
