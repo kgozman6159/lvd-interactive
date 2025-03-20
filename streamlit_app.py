@@ -317,7 +317,7 @@ def get_axis_specs(axis, key):
         num_format = '.1e'
     
     else:
-        num_format = ""
+        num_format = ".0f"
 
     return type_axis, reverse_axis, axis_label, channel, show_error, ref, num_format
 
@@ -341,7 +341,7 @@ with st.sidebar:
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr, yref, yformat = get_axis_specs(plot_yaxis, 'yaxis')
     
-    reverse_axes = st.checkbox("Reverse x and y axes", value=False, on_change=lambda: st.session_state.update(show_tutorial=False))
+    reverse_axes = st.toggle("Reverse x and y axes when plotting", value=False, on_change=lambda: st.session_state.update(show_tutorial=False))
 
     if reverse_axes:
         plot_xaxis, plot_yaxis = plot_yaxis, plot_xaxis
@@ -834,7 +834,7 @@ with st.container():
 
 st.markdown("Filtered Galaxies")
 st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
-
+#edited_df = st.data_editor(filtered_df, num_rows="dynamic")
 with st.expander("Description of Catalogs"):
     #st.markdown("### Description of Catalogs")
     st.markdown("""
@@ -855,7 +855,7 @@ with st.expander("Description of Catalogs"):
 
 with st.expander("Roadmap"):
     st.markdown("""
-                #### last updated December 2024
+                #### last updated March 2025
 
             :red-background[**Bug Fixes :beetle:**] 
             - [ ] Filtering by properties currently doesn't display upper limits
