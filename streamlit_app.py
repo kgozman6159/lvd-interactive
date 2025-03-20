@@ -41,11 +41,11 @@ from streamlit_theme import st_theme
 table_names = ['dwarf_mw', 'dwarf_m31', 'dwarf_local_field', 'dwarf_local_field_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
 #release = 'v1.0.3'
-release = table.Table.read('https://raw.githubusercontent.com/apace7/local_volume_database/main/code/release_version.txt', format='ascii.fast_no_header')['col1'][0]
 # ---------------------load data---------------------- #
 @st.cache_data
 def load_data():
-    
+    release = table.Table.read('https://raw.githubusercontent.com/apace7/local_volume_database/main/code/release_version.txt', format='ascii.fast_no_header')['col1'][0]
+
     # loads versions from latest github release
     # dwarf_all = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_all.csv'%release)
     # dsph_mw = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_mw.csv'%release)
@@ -130,10 +130,10 @@ def load_data():
 
 
     # return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
-    return misc_host, combined_df
+    return misc_host, combined_df, release
 
 #dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, master_df = load_data()
-misc_host, master_df = load_data()
+misc_host, master_df, release = load_data()
 
 #print(master_df.iloc[np.where(master_df['distance_host'] == 0)])
 
@@ -346,28 +346,30 @@ with st.sidebar:
     
     reverse_axes = st.toggle("Reverse x and y axes when plotting", value=False, on_change=lambda: st.session_state.update(show_tutorial=False))
 
-    if reverse_axes:
-        plot_xaxis, plot_yaxis = plot_yaxis, plot_xaxis
-        type_x, type_y = type_y, type_x
-        reverse_x, reverse_y = reverse_y, reverse_x
-        xlabel, ylabel = ylabel, xlabel
-        channel_x, channel_y = channel_y, channel_x
-        show_xerr, show_yerr = show_yerr, show_xerr
-        xref, yref = yref, xref
-        xformat, yformat = yformat, xformat
+if reverse_axes:
+    plot_xaxis, plot_yaxis = plot_yaxis, plot_xaxis
+    type_x, type_y = type_y, type_x
+    reverse_x, reverse_y = reverse_y, reverse_x
+    xlabel, ylabel = ylabel, xlabel
+    channel_x, channel_y = channel_y, channel_x
+    show_xerr, show_yerr = show_yerr, show_xerr
+    xref, yref = yref, xref
+    xformat, yformat = yformat, xformat    
+
 # ---------------------x and y limits---------------------- #
 #st.sidebar.markdown("### Axis Limits")
 xmin, xmax, ymin, ymax = None, None, None, None
 xdom, ydom = None, None
 with st.sidebar:
     with st.expander("Set Axis Limits"):
-        print(tab_desc[plot_xaxis]['dtype'], tab_desc[plot_yaxis]['dtype'])
-        print(plot_xaxis)
+        print('dtype_xy', tab_desc[plot_xaxis]['dtype'], tab_desc[plot_yaxis]['dtype'])
+        print('plot_xaxis, yaxis', plot_xaxis, plot_yaxis)
         if tab_desc[plot_xaxis]['dtype'] != 'str':
             x_min, x_max = master_df[plot_xaxis].min(), master_df[plot_xaxis].max()
         else:
             x_min, x_max = None, None
             xdom = master_df[plot_xaxis].unique()
+
         if tab_desc[plot_yaxis]['dtype'] != 'str':
             y_min, y_max = master_df[plot_yaxis].min(), master_df[plot_yaxis].max()
         else:
@@ -387,7 +389,7 @@ with st.sidebar:
         if tab_desc[plot_yaxis]['dtype'] != 'str':
             ymax = col2.number_input(f"{tab_desc[plot_yaxis]['label']} max",min_value=y_min, key="ymax", value=y_max, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
 
-print(xmin, xmax, ymin, ymax)
+print('xmin, xmax, ymin, ymax', xmin, xmax, ymin, ymax)
 if xmin is None:
     xmin = x_min
 if xmax is None:
@@ -397,14 +399,21 @@ if ymin is None:
 if ymax is None:
     ymax = y_max
 
-print(xdom)
+# print('xdom', xdom)
+print('xmin, xmax, ymin, ymax', xmin, xmax, ymin, ymax)
+print("xdom, ydom", xdom, ydom)
+
 
 if xdom is None:
     xdom = [xmin, xmax]
 if ydom is None:
     ydom = [ymin, ymax]
 
-print(xdom, ydom)
+print("xdom, ydom", xdom, ydom, xdom[0], ydom[0])
+
+# if reverse_axes:
+#     xmin, xmax, ymin, ymax = ymin, ymax, xmin, xmax
+#     xdom, ydom = ydom, xdom
 # ---------------------filtering---------------------- #
 #filter by source
 source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
