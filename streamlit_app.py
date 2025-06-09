@@ -131,10 +131,10 @@ def load_data():
 
 
     # return dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, combined_df
-    return misc_host, combined_df
+    return misc_host, combined_df, release
 
 #dwarf_all, dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate, misc_host, master_df = load_data()
-misc_host, master_df = load_data()
+misc_host, master_df, release = load_data()
 
 #print(master_df.iloc[np.where(master_df['distance_host'] == 0)])
 
