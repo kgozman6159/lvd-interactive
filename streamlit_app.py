@@ -41,10 +41,11 @@ from streamlit_theme import st_theme
 table_names = ['dwarf_mw', 'dwarf_m31', 'dwarf_local_field', 'dwarf_local_field_distant', 'gc_ambiguous', 'gc_mw_new', 'gc_harris', 'gc_dwarf_hosted', 'gc_other', 'candidate']
 table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant Local Field Dwarfs', 'Ambiguous GCs', 'New MW GCs', 'Harris GCs', 'Dwarf Hosted GCs', 'Other GCs', 'Candidates']
 #release = 'v1.0.3'
-release = table.Table.read('https://raw.githubusercontent.com/apace7/local_volume_database/main/code/release_version.txt', format='ascii.fast_no_header')['col1'][0]
 # ---------------------load data---------------------- #
 @st.cache_data
 def load_data():
+    release = table.Table.read('https://raw.githubusercontent.com/apace7/local_volume_database/main/code/release_version.txt', format='ascii.fast_no_header')['col1'][0]
+
     
     # loads versions from latest github release
     # dwarf_all = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_all.csv'%release)
