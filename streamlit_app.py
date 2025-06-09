@@ -316,6 +316,9 @@ def get_axis_specs(axis, key):
 
     if axis in ['mass_stellar', 'mass_HI', 'mass_dynamical_wolf']:
         num_format = '.1e'
+        
+    elif axis in ['ra', 'dec', 'position_angle', 'vlos_systemic', 'll', 'bb', 'sg_xx', 'sg_yy', 'sg_zz', 'velocity_lg', 'velocity_gsr']:
+        num_format = '.0f'
     
     else:
         num_format = ""
