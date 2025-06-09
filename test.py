@@ -46,7 +46,6 @@ table_names_pretty = ['MW Dwarfs', "M31 Dwarfs", 'Local Field Dwarfs', 'Distant 
 def load_data():
     release = table.Table.read('https://raw.githubusercontent.com/apace7/local_volume_database/main/code/release_version.txt', format='ascii.fast_no_header')['col1'][0]
 
-    
     # loads versions from latest github release
     # dwarf_all = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_all.csv'%release)
     # dsph_mw = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/dwarf_mw.csv'%release)
@@ -70,7 +69,7 @@ def load_data():
     #comb['mass_HI_ul'] = np.log10(235600*comb['flux_HI_ul']*(comb['distance']/1000.)**2)
     # Combine all tables except dwarf_all into one big dataframe
     #tables = [dsph_mw, dsph_m31, dsph_lf, dsph_lf_distant, gc_ambiguous, gc_mw_new, gc_harris, gc_dwarf_hosted, gc_other, candidate]
-    #combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
+    #combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/v1.0.2/comb_all.csv')#%release)
     combined_df = pd.read_csv('https://github.com/apace7/local_volume_database/releases/download/%s/comb_all.csv'%release)
 
     misc_host = combined_df[combined_df['table'] == 'misc']
@@ -317,8 +316,11 @@ def get_axis_specs(axis, key):
     if axis in ['mass_stellar', 'mass_HI', 'mass_dynamical_wolf']:
         num_format = '.1e'
     
+    elif axis in ['ra', 'dec', 'position_angle', 'vlos_systemic', 'll', 'bb', 'sg_xx', 'sg_yy', 'sg_zz', 'velocity_lg', 'velocity_gsr']:
+        num_format = '.0f'
+
     else:
-        num_format = ""
+        num_format = ''
 
     return type_axis, reverse_axis, axis_label, channel, show_error, ref, num_format
 
@@ -342,73 +344,25 @@ with st.sidebar:
         #right.caption("---", help=tab_desc[plot_yaxis]['desc'])
         type_y, reverse_y, ylabel, channel_y, show_yerr, yref, yformat = get_axis_specs(plot_yaxis, 'yaxis')
     
-    reverse_axes = st.toggle("Reverse x and y axes", value=False, on_change=lambda: st.session_state.update(show_tutorial=False))
+    reverse_axes = st.toggle("Reverse x and y axes when plotting", value=False, on_change=lambda: st.session_state.update(show_tutorial=False))
 
-    if reverse_axes:
-        plot_xaxis, plot_yaxis = plot_yaxis, plot_xaxis
-        type_x, type_y = type_y, type_x
-        reverse_x, reverse_y = reverse_y, reverse_x
-        xlabel, ylabel = ylabel, xlabel
-        channel_x, channel_y = channel_y, channel_x
-        show_xerr, show_yerr = show_yerr, show_xerr
-        xref, yref = yref, xref
-        xformat, yformat = yformat, xformat
-# ---------------------x and y limits---------------------- #
-#st.sidebar.markdown("### Axis Limits")
-xmin, xmax, ymin, ymax = None, None, None, None
-xdom, ydom = None, None
-with st.sidebar:
-    with st.expander("Set Axis Limits"):
-        print(tab_desc[plot_xaxis]['dtype'], tab_desc[plot_yaxis]['dtype'])
-        print(plot_xaxis)
-        if tab_desc[plot_xaxis]['dtype'] != 'str':
-            x_min, x_max = master_df[plot_xaxis].min(), master_df[plot_xaxis].max()
-        else:
-            x_min, x_max = None, None
-            xdom = master_df[plot_xaxis].unique()
-        if tab_desc[plot_yaxis]['dtype'] != 'str':
-            y_min, y_max = master_df[plot_yaxis].min(), master_df[plot_yaxis].max()
-        else:
-            y_min, y_max = None, None
-            ydom = master_df[plot_yaxis].unique()
+if reverse_axes:
+    plot_xaxis, plot_yaxis = plot_yaxis, plot_xaxis
+    type_x, type_y = type_y, type_x
+    reverse_x, reverse_y = reverse_y, reverse_x
+    xlabel, ylabel = ylabel, xlabel
+    channel_x, channel_y = channel_y, channel_x
+    show_xerr, show_yerr = show_yerr, show_xerr
+    xref, yref = yref, xref
+    xformat, yformat = yformat, xformat    
 
 
-        col1, col2 = st.columns(2)
-  
-        if tab_desc[plot_xaxis]['dtype'] != 'str':
-            xmin = col1.number_input(f"{tab_desc[plot_xaxis]['label']} min", max_value=x_max, key="xmin", value=x_min, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
-        if tab_desc[plot_yaxis]['dtype'] != 'str':
-            ymin = col1.number_input(f"{tab_desc[plot_yaxis]['label']} min", max_value=y_max, key="ymin", value=y_min, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
-
-        if tab_desc[plot_xaxis]['dtype'] != 'str':
-            xmax = col2.number_input(f"{tab_desc[plot_xaxis]['label']} max", min_value=x_min, key="xmax", value=x_max, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
-        if tab_desc[plot_yaxis]['dtype'] != 'str':
-            ymax = col2.number_input(f"{tab_desc[plot_yaxis]['label']} max",min_value=y_min, key="ymax", value=y_max, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
-
-print(xmin, xmax, ymin, ymax)
-if xmin is None:
-    xmin = x_min
-if xmax is None:
-    xmax = x_max
-if ymin is None:
-    ymin = y_min
-if ymax is None:
-    ymax = y_max
-
-print(xdom)
-
-if xdom is None:
-    xdom = [xmin, xmax]
-if ydom is None:
-    ydom = [ymin, ymax]
-
-print(xdom, ydom)
 # ---------------------filtering---------------------- #
 #filter by source
 source = st.sidebar.multiselect('Source', table_names_pretty, default=table_names_pretty, on_change=lambda: st.session_state.update(show_tutorial=False))
 if source:
     master_df = master_df[master_df['source_pretty'].isin(source)]
-print(source)
+print('source', source)
 
 # ---------------------filtering by columns---------------------- #
 with st.sidebar:
@@ -441,6 +395,62 @@ with st.sidebar:
                 master_df = master_df[(master_df[col] >= val[0]) & (master_df[col] <= val[1])]
             else:
                 master_df = master_df[master_df[col].isin(val)]
+
+
+# ---------------------x and y limits---------------------- #
+#st.sidebar.markdown("### Axis Limits")
+xmin, xmax, ymin, ymax = None, None, None, None
+xdom, ydom = None, None
+with st.sidebar:
+    with st.expander("Set Axis Limits"):
+        print('dtype_xy', tab_desc[plot_xaxis]['dtype'], tab_desc[plot_yaxis]['dtype'])
+        print('plot_xaxis, yaxis', plot_xaxis, plot_yaxis)
+        if tab_desc[plot_xaxis]['dtype'] != 'str':
+            x_min, x_max = master_df[plot_xaxis].min(), master_df[plot_xaxis].max()
+        else:
+            x_min, x_max = None, None
+            xdom = master_df[plot_xaxis].unique()
+
+        if tab_desc[plot_yaxis]['dtype'] != 'str':
+            y_min, y_max = master_df[plot_yaxis].min(), master_df[plot_yaxis].max()
+        else:
+            y_min, y_max = None, None
+            ydom = master_df[plot_yaxis].unique()
+
+
+        col1, col2 = st.columns(2)
+  
+        if tab_desc[plot_xaxis]['dtype'] != 'str':
+            xmin = col1.number_input(f"{tab_desc[plot_xaxis]['label']} min", max_value=x_max, key="xmin", value=x_min, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+        if tab_desc[plot_yaxis]['dtype'] != 'str':
+            ymin = col1.number_input(f"{tab_desc[plot_yaxis]['label']} min", max_value=y_max, key="ymin", value=y_min, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+
+        if tab_desc[plot_xaxis]['dtype'] != 'str':
+            xmax = col2.number_input(f"{tab_desc[plot_xaxis]['label']} max", min_value=x_min, key="xmax", value=x_max, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+        if tab_desc[plot_yaxis]['dtype'] != 'str':
+            ymax = col2.number_input(f"{tab_desc[plot_yaxis]['label']} max",min_value=y_min, key="ymax", value=y_max, placeholder="Input a limit", on_change=lambda: st.session_state.update(show_tutorial=False))
+
+print('xmin, xmax, ymin, ymax', xmin, xmax, ymin, ymax)
+if xmin is None:
+    xmin = x_min
+if xmax is None:
+    xmax = x_max
+if ymin is None:
+    ymin = y_min
+if ymax is None:
+    ymax = y_max
+
+# print('xdom', xdom)
+print('xmin, xmax, ymin, ymax', xmin, xmax, ymin, ymax)
+print("xdom, ydom", xdom, ydom)
+
+
+if xdom is None:
+    xdom = [xmin, xmax]
+if ydom is None:
+    ydom = [ymin, ymax]
+print(len(xdom), len(ydom))
+print("xdom, ydom", xdom, ydom, xdom[0], ydom[0])
 
 
 #---------------------user select color for each source----------------------#
@@ -835,7 +845,7 @@ with st.container():
 
 st.markdown("Filtered Galaxies")
 st.dataframe(filtered_df, use_container_width=True, selection_mode='multi-row', hide_index=False, on_select="rerun")
-
+#edited_df = st.data_editor(filtered_df, num_rows="dynamic")
 with st.expander("Description of Catalogs"):
     #st.markdown("### Description of Catalogs")
     st.markdown("""
@@ -856,7 +866,7 @@ with st.expander("Description of Catalogs"):
 
 with st.expander("Roadmap"):
     st.markdown("""
-                #### last updated December 2024
+                #### last updated March 2025
 
             :red-background[**Bug Fixes :beetle:**] 
             - [ ] Filtering by properties currently doesn't display upper limits
@@ -904,4 +914,3 @@ with st.container():
 #st.text('dSphs in MW')
 #st.dataframe(dsph_mw, use_container_width=False)
 #st.dataframe(misc_host)
-
