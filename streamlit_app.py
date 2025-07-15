@@ -214,7 +214,7 @@ def tutorial():
                 
     #### :bar_chart: The main plot in the middle shows the properties of the objects in the database. 
                 
-    :three_button_mouse: Click and drag to :blue-background[**pan**] around the plot. 
+    🖱️ Click and drag to :blue-background[**pan**] around the plot. 
                 
     :mag_right: Use your mouse wheel and hold down the 'control' and 'alt' ('option' on a Mac) keys simultaneously to :blue-background[**zoom**] in and out.
                 You can also zoom only in the x or y directions by using the mouse wheel and holding down the 'alt' or 'control' keys, respectively.
