@@ -120,6 +120,9 @@ def load_data():
         if key == "distance_host":
             combined_df[key] = combined_df[key].replace(0, np.nan)
         
+        if key == 'mass_dynamical_wolf':
+            np.nan_to_num(combined_df[key], copy=False, posinf=np.nan, neginf=np.nan, nan=np.nan)
+
 
         if key == 'metallicity_type':
             combined_df['metallicity_type'] = combined_df['metallicity_type'].fillna("None")
@@ -260,7 +263,7 @@ tab_desc['reference'] = tab_desc['reference'].replace('N/A', '')
 tab_desc = tab_desc.T.to_dict(index='property')
 
 valid_plot_cols = ['ra', 'dec', 'name', "host_pretty", 'confirmed_real', 
-                   'confirmed_dwarf', 'rhalf', 'rhalf_physical', 'rhalf_sph_physical', 'position_angle', 'ellipticity', 
+                   'confirmed_galaxy', 'rhalf', 'rhalf_physical', 'rhalf_sph_physical', 'position_angle', 'ellipticity', 
                     'apparent_magnitude_v', 'M_V', 'mass_stellar', 'vlos_systemic', 'vlos_sigma', 'pmra',  'pmdec', 'metallicity_spectroscopic', 
                 'metallicity_spectroscopic_sigma', 'metallicity_isochrone',  'metallicity_photometric', 'metallicity_photometric_sigma', 
                 'metallicity', 'metallicity_type','rcore', 'rking', 'rad_sersic', 'n_sersic', 'age',  'flux_HI', 'distance', 'distance_modulus',
@@ -288,7 +291,10 @@ def get_axis_specs(axis, key):
     label = tab_desc[axis]['label']
     if tab_desc[axis]['dtype'] in ['float64'] and axis not in ['ra', 'dec', 'll']:
         if not (master_df[axis] <= 0).any():
-            type_axis = st.segmented_control(label + ' scale', ['linear', 'log'], default='linear', key=key)
+            type_axis = st.segmented_control(label + ' scale', ['linear', 'log'], default='log', key=key)
+    if axis in ['rhalf', 'rhalf_physical', 'rhalf_sph_physical']:
+        print("TPYE", type_axis)
+
     if tab_desc[axis]['dtype'] in ['float64']:
         channel = 'quantitative'
     elif tab_desc[axis]['dtype'] in ['int64']:
@@ -328,9 +334,9 @@ def get_axis_specs(axis, key):
 # ---------------------sidebar---------------------- #
 
 if "my_key1" not in st.session_state:
-    st.session_state.my_key1 = "ra"
+    st.session_state.my_key1 = "rhalf_sph_physical"
 if "my_key2" not in st.session_state:
-    st.session_state.my_key2 = "dec"
+    st.session_state.my_key2 = "M_V"
 
 st.session_state.my_key1=st.session_state.my_key1
 st.session_state.my_key2=st.session_state.my_key2
@@ -430,8 +436,16 @@ with st.sidebar:
                 #label = f'({tab_desc[col]["unit"]})'
                 label = f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})'
             if tab_desc[col]['dtype'] == 'float64' or tab_desc[col]['dtype'] == 'int64':
-                min_val, max_val = master_df[col].min(), master_df[col].max()
-                filter_values[col] = filter_container.slider(label, min_val, max_val, (min_val, max_val), step=0.1, on_change=lambda: st.session_state.update(show_tutorial=False))
+  
+                if col in ['rhalf', 'rhalf_physical', 'rhalf_sph_physical']:
+                    # print("LOGTRUE")
+                    options = np.append(np.logspace(np.log10(master_df[col].min()), np.log10(master_df[col].max()), num=1000), (master_df[col].max()))
+                else:
+                    options = np.append(np.arange(master_df[col].min(), master_df[col].max(), step=0.1), master_df[col].max())
+                    # options = np.append(np.arange(combined_df[col].min(), combined_df[col].max(), step=0.1), combined_df[col].max())
+                # min_val, max_val = master_df[col].min(), master_df[col].max()
+                # filter_values[col] = filter_container.slider(label, min_val, max_val, (min_val, max_val), step=0.1, on_change=lambda: st.session_state.update(show_tutorial=False))
+                filter_values[col] = filter_container.select_slider(label, options=options, value=(options[0], options[-1]), format_func=lambda x: f"{x:.2f}",  on_change=lambda: st.session_state.update(show_tutorial=False))
                 #filter_values[col] = filter_container.select_slider(f'{tab_desc[col]["label"]} ({tab_desc[col]["unit"]})', sorted(master_df[col]), (min_val, max_val), on_change=lambda: st.session_state.update(show_tutorial=False))
 
             else:
@@ -682,7 +696,7 @@ if plot_xaxis == 'M_V' and plot_yaxis == 'metallicity':
 
 if plot_xaxis == 'rhalf_sph_physical' and plot_yaxis == 'M_V':
     x = np.arange(1e0, 1e4, 1)
-    x = np.logspace(0, 4, 1000)
+    x = np.logspace(-1, 6, 1000)
     for mu in [24, 26, 28, 30, 32]:
         const_mu = pd.DataFrame({
         "x":(x),
